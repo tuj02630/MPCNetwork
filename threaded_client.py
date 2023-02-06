@@ -24,22 +24,26 @@ print("Received message from server thread on :" + str(server_t_addr))
 if len(sys.argv) <= 1:
     vid = cv2.VideoCapture(0)
 else:
-    vid = cv2.VideoCapture(os.getcwd() + "\\videos\\sample-20s.mp4")
+    vid = cv2.VideoCapture(os.getcwd() + "\\videos\\" + str(sys.argv[1]))
 # replace 'rocket.mp4' with 0 for webcam
 fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+title = 'SENDING VIDEO ' + str(os.getpid())
 
 while True:
     while vid.isOpened():
         _, frame = vid.read()
         if not _:
+            print("No more video, closing...")
+            # cv2.destroyWindow(title)
+            vid.release()
             client_c_socket.close()
-            break
+            exit(0)
         frame = imutils.resize(frame, WIDTH)
         encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         message = base64.b64encode(buffer)
         client_c_socket.sendto(message, server_t_addr)
         # frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        title = 'TRANSMITTING VIDEO ' + str(os.getpid())
+
         cv2.imshow(title, frame)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):

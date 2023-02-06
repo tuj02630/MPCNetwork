@@ -19,10 +19,14 @@ def thread_receive(*thread_receive_args):
     server_t_socket.sendto(message, client_address)
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
     title = 'RECEIVING VIDEO ' + str(threading.get_ident())
+    server_t_socket.settimeout(15)
     while True:
-        packet, _ = server_t_socket.recvfrom(BUFF_SIZE)
-        if not sys.getsizeof(packet):
+        try:
+            packet, _ = server_t_socket.recvfrom(BUFF_SIZE)
+        except TimeoutError:
             cv2.destroyWindow(title)
+            server_t_socket.close()
+            break
         data = base64.b64decode(packet, ' /')
         npdata = np.frombuffer(data, dtype)
         frame = cv2.imdecode(npdata, 1)
