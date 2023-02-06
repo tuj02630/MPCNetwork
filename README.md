@@ -1,5 +1,3 @@
-# MPCNetwork
-setup:\
+# Quick Setup:\
 pip install opencv-python\
 pip install imutils\
-Python 3.9.0
