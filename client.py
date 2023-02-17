@@ -9,7 +9,9 @@ BUFF_SIZE = 65536
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
-host_ip = '127.0.0.1'  # socket.gethostbyname(host_name)
+host_ip = '44.212.17.188'
+# host_ip = "127.0.0.1"
+# host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
 print(host_ip)
 port = 9999
 client_addr = (host_ip, port)
