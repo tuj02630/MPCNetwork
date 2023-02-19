@@ -12,7 +12,6 @@ host_name = socket.gethostname()
 host_ip = '44.212.17.188'
 host_ip = '127.0.0.1'
 # host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
-print(host_ip)
 port = 9999
 client_addr = (host_ip, port)
 WIDTH = 400
@@ -20,8 +19,13 @@ WIDTH = 400
 vid = cv2.VideoCapture(0)  # replace 'rocket.mp4' with 0 for webcam
 fps, st, frames_to_count, cnt = (0, 0, 20, 0)
 
-message = b'Hello'
-client_socket.sendto(message, (host_ip, port))
+client_socket.settimeout(15)
+client_socket.sendto(b'CLIENT_TYPE_S', (host_ip, port))
+try:
+    client_socket.recvfrom(BUFF_SIZE)
+except TimeoutError or ConnectionResetError:
+    print("No response from server. Is it running?")
+    exit(1)
 
 while True:
     while vid.isOpened():
