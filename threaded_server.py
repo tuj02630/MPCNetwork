@@ -65,7 +65,7 @@ while True:
     msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
     (client_ip, client_port) = client_addr
     rec_args = (client_ip, client_port, len(threads))
-    print('Got connection from ', client_addr)
+    print('Got connection from ', client_addr, ', Client is of type:', msg.decode())
     curr_thread_receive = threading.Thread(target=thread_receive, args=rec_args)
     threads.append(curr_thread_receive)
     curr_thread_receive.start()
