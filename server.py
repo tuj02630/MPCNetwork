@@ -8,50 +8,54 @@ import threading
 # socket setup
 BUFF_SIZE = 65536
 host_ip = '127.0.0.1'
-rc_port = 8888  # receiver client port
-sc_port = 9999  # sender client port
+sv_port = 9999  # sender video port
+sa_port = 9998  # sender audio port
+rv_port = 8888  # receiver video port
+ra_port = 8887  # receiver audio port
 host_name = socket.gethostname()
-rc_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-rc_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 dtype = numpy.uint8
 
 # other variables
 thread_array = []
-found_ls_client = False
-rc_client_addr = ('', 0)
+found_rv_client = False
+found_ra_client = False
+rv_addr = ('', 0)
 
 
-def find_receiver_client():
-    time.sleep(0.25)  # delay a tiny bit
-    ls_address = (host_ip, rc_port)
-    rc_socket.bind(ls_address)
-    print('Listening at:', ls_address)
-    global rc_client_addr
-    rc_msg, rc_client_addr = rc_socket.recvfrom(BUFF_SIZE)
-    print('GOT connection from ', rc_client_addr, ', Client type is ', str(rc_msg))
-    rc_socket.sendto(b'Confirmed', rc_client_addr)
-    global found_ls_client
-    found_ls_client = True
+def find_video_receiver():
+    rv_socket.bind((host_ip, rv_port))
+    print('Listening at:', (host_ip, rv_port))
+    global rv_addr
+    rc_msg, rv_addr = rv_socket.recvfrom(BUFF_SIZE)
+    print('GOT connection from ', rv_addr, ', Client type is ', str(rc_msg))
+    rv_socket.sendto(b'Confirmed', rv_addr)
+    global found_rv_client
+    found_rv_client = True
     return
 
 
-def find_sender_client():
-    socket_address = (host_ip, sc_port)
-    server_socket.bind(socket_address)
-    print('Listening at:', socket_address)
-    msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
-    print('GOT connection from ', client_addr, ', Client type is ', str(msg))
-    server_socket.sendto(b'Confirmed', client_addr)
+def find_video_sender():
+    sv_socket.bind((host_ip, sv_port))
+    print('Listening at:', (host_ip, sv_port))
+    msg, sv_addr = sv_socket.recvfrom(BUFF_SIZE)
+    print('GOT connection from ', sv_addr, ', Client type is ', str(msg))
+    sv_socket.sendto(b'Confirmed', sv_addr)
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
     while True:
-        packet, _ = server_socket.recvfrom(BUFF_SIZE)
+        packet, _ = sv_socket.recvfrom(BUFF_SIZE)
         data = base64.b64decode(packet, ' /')
-        npdata = numpy.frombuffer(data, dtype) # the actual data if the server wants to do anything with it
+        npdata = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
 
-        if found_ls_client:
-            rc_socket.sendto(packet, rc_client_addr)
+        if found_rv_client:
+            rv_socket.sendto(packet, rv_addr)
 
         if cnt == frames_to_count:
             # noinspection PyBroadException
@@ -64,9 +68,37 @@ def find_sender_client():
         cnt += 1
 
 
-receiver_client_thread = threading.Thread(target=find_receiver_client)
-sender_client_thread = threading.Thread(target=find_sender_client)
-thread_array.append(sender_client_thread)
-thread_array.append(receiver_client_thread)
+def find_audio_sender():
+    # initial socket setup
+    sa_socket.bind((host_ip, sa_port))
+    print('Listening at:', (host_ip, sa_port))
+    msg, sa_addr = sa_socket.recvfrom(BUFF_SIZE)
+    print('GOT connection from ', sa_addr, ', Client type is ', str(msg))
+    sv_socket.sendto(b'Confirmed', sa_addr)
+
+    return
+
+
+def find_audio_receiver():
+    ra_socket.bind((host_ip, ra_port))
+    print('Listening at:', (host_ip, ra_port))
+    msg, ra_addr = ra_socket.recvfrom(BUFF_SIZE)
+    print('GOT connection from ', ra_addr, ', Client type is ', str(msg))
+    sv_socket.sendto(b'Confirmed', ra_addr)
+
+    return
+
+
+vid_sender_thread = threading.Thread(target=find_video_sender)
+aud_sender_thread = threading.Thread(target=find_audio_sender)
+vid_receiver_thread = threading.Thread(target=find_video_receiver)
+aud_receiver_thread = threading.Thread(target=find_audio_receiver)
+
+thread_array.append(vid_sender_thread)
+thread_array.append(aud_sender_thread)
+thread_array.append(vid_receiver_thread)
+thread_array.append(aud_receiver_thread)
+
 for thread in thread_array:
     thread.start()
+    time.sleep(0.25)
