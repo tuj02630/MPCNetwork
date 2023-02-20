@@ -10,7 +10,7 @@ BUFF_SIZE = 65536
 client_c_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_c_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
-host_ip = '127.0.0.1'
+host_ip = '44.212.17.188'
 
 port = 8888
 client_addr = (host_ip, port)

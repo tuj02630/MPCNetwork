@@ -10,7 +10,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
-host_ip = '127.0.0.1'
+# host_ip = '127.0.0.1'
 # host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
 port = 9999
 client_addr = (host_ip, port)
