@@ -1,4 +1,3 @@
-# This is server code to send video frames over UDP
 import base64
 import time
 import cv2
@@ -17,7 +16,7 @@ port = 9999
 client_addr = (host_ip, port)
 WIDTH = 300
 
-message = b'Hello'
+message = b'CLIENT_TYPE_SEND'
 client_c_socket.sendto(message, client_addr)
 msg, server_t_addr = client_c_socket.recvfrom(BUFF_SIZE)
 print("Received message from server thread on :" + str(server_t_addr))

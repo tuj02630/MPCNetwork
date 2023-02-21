@@ -1,11 +1,10 @@
-# This is client code to receive video frames over UDP
 import base64
 import time
 import cv2
-import numpy as np
+import numpy
 import socket
 import threading
-import sys
+
 threads = list()
 
 
@@ -28,7 +27,7 @@ def thread_receive(*thread_receive_args):
             server_t_socket.close()
             break
         data = base64.b64decode(packet, ' /')
-        npdata = np.frombuffer(data, dtype)
+        npdata = numpy.frombuffer(data, dtype)
         frame = cv2.imdecode(npdata, 1)
         frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
@@ -48,7 +47,7 @@ def thread_receive(*thread_receive_args):
 
 
 BUFF_SIZE = 65536
-dtype = np.uint8
+dtype = numpy.uint8
 
 # server_socket listens for incoming connections
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -66,7 +65,7 @@ while True:
     msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
     (client_ip, client_port) = client_addr
     rec_args = (client_ip, client_port, len(threads))
-    print('GOT connection from ', client_addr)
+    print('Got connection from ', client_addr, ', Client is of type:', msg.decode())
     curr_thread_receive = threading.Thread(target=thread_receive, args=rec_args)
     threads.append(curr_thread_receive)
     curr_thread_receive.start()
