@@ -1,4 +1,3 @@
-# This is server code to send video frames over UDP
 import base64
 import time
 import cv2
@@ -15,7 +14,6 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
 FRAMES_PER_BUFFER = 1000
-
 
 BUFF_SIZE = 65536
 vid_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
