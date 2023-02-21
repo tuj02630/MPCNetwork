@@ -9,7 +9,7 @@ import pyaudio
 
 thread_array = []
 
-# audio constants
+# audio settings
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -24,7 +24,6 @@ aud_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
-host_ip = '127.0.0.1'
 # host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
 v_port = 9999
 a_port = 9998
@@ -44,8 +43,9 @@ def audio_sending_thread():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     while True:
         data = stream.read(FRAMES_PER_BUFFER)
-
-    return
+        print(data)
+        data = base64.b64encode(data)
+        aud_socket.sendto(data, a_addr)
 
 
 def video_sending_thread():
@@ -66,7 +66,7 @@ def video_sending_thread():
             encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
             message = base64.b64encode(buffer)
             vid_socket.sendto(message, v_addr)
-            # frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             cv2.imshow('TRANSMITTING VIDEO', frame)
             cv2.setWindowTitle('TRANSMITTING VIDEO', 'TRANSMITTING VIDEO ' + str(fps))
             key = cv2.waitKey(1) & 0xFF
