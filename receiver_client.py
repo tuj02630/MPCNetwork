@@ -8,7 +8,6 @@ import pyaudio
 
 thread_array = []
 
-# socket setup
 BUFF_SIZE = 65536
 vid_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 vid_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
@@ -22,6 +21,7 @@ a_port = 8887
 v_addr = (host_ip, v_port)
 a_addr = (host_ip, a_port)
 
+# audio settings, might want to make a simple api for these later on
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2

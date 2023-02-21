@@ -8,7 +8,7 @@ import pyaudio
 
 thread_array = []
 
-# audio settings
+# audio settings, might want to make a simple api for these later on
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -41,7 +41,7 @@ def audio_sending_thread():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     while True:
         data = stream.read(FRAMES_PER_BUFFER)
-        print(data)
+        # print(data)
         data = base64.b64encode(data)
         aud_socket.sendto(data, a_addr)
 
