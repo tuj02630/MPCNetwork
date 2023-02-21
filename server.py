@@ -14,6 +14,10 @@ sa_port = 9998  # sender audio port
 rv_port = 8888  # receiver video port
 ra_port = 8887  # receiver audio port
 host_name = socket.gethostname()
+# S: Sending
+# R: Receiving
+# V: Video
+# A: Audio
 rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -24,7 +28,7 @@ ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 dtype = numpy.uint8
 
-# audio settings are unused but i figure it can't hurt to have them on the server
+# audio settings are unused here but i figure it can't hurt to have them on the server
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -61,8 +65,7 @@ def find_video_sender():
     while True:
         packet, _ = sv_socket.recvfrom(BUFF_SIZE)
         data = base64.b64decode(packet, ' /')
-        npdata = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
-
+        data = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
         if found_rv_client:
             rv_socket.sendto(packet, rv_addr)
 
@@ -91,10 +94,9 @@ def find_audio_sender():
         except TimeoutError:
             sa_socket.close()
             break
-        data = base64.b64decode(packet, ' /')
+        data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
         if found_ra_client:
             ra_socket.sendto(packet, ra_addr)
-        # print(data)
     return
 
 

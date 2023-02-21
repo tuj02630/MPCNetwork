@@ -21,8 +21,7 @@ a_port = 8887
 v_addr = (host_ip, v_port)
 a_addr = (host_ip, a_port)
 
-WIDTH = 300
-
+# audio settings, might want to make a simple api for these later on
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
