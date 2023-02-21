@@ -1,7 +1,8 @@
 # Quick Setup:
 pip install opencv-python\
 pip install imutils\
-pip install pybluez
+pip install pybluez\
+pip install pyaudio
 
 Resource used:
 
