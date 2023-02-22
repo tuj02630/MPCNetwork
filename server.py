@@ -8,6 +8,7 @@ import pyaudio
 # socket setup
 BUFF_SIZE = 65536
 host_ip = '44.212.17.188'
+host_ip = '127.0.0.1'
 sv_port = 9999  # sender video port
 sa_port = 9998  # sender audio port
 rv_port = 8888  # receiver video port

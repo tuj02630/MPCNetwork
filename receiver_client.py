@@ -1,4 +1,5 @@
 import base64
+import os
 import threading
 import time
 import cv2
@@ -16,6 +17,8 @@ aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
+host_ip = '127.0.0.1'
+
 v_port = 8888
 a_port = 8887
 v_addr = (host_ip, v_port)
@@ -62,7 +65,7 @@ def video_receiving_thread():
         exit(1)
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
     dtype = numpy.uint8
-    title = 'RECEIVING VIDEO ' + str(threading.get_ident())
+    title = 'RECEIVING VIDEO ' + str(os.getpid())
     print('Waiting for video...')
     while True:
         try:
