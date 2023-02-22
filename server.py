@@ -3,12 +3,11 @@ import time
 import numpy
 import socket
 import threading
-import pyaudio
 
 # socket setup
 BUFF_SIZE = 65536
-host_ip = '44.212.17.188'
-host_ip = '127.0.0.1'
+host_ip = '172.31.12.186'
+# host_ip = '127.0.0.1'
 sv_port = 9999  # sender video port
 sa_port = 9998  # sender audio port
 rv_port = 8888  # receiver video port
@@ -30,7 +29,7 @@ dtype = numpy.uint8
 
 # audio settings are unused here but i figure it can't hurt to have them on the server
 CHUNK = 1024
-FORMAT = pyaudio.paInt16
+# FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
 FRAMES_PER_BUFFER = 1000
