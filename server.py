@@ -55,14 +55,16 @@ def find_video_receiver():
 
 
 def find_video_sender():
-    sv_socket.settimeout(5)
+    sv_socket.settimeout(500)
     while True:
+
         sv_socket.bind((host_ip, sv_port))
         print('Listening at:', (host_ip, sv_port))
         msg, sv_addr = sv_socket.recvfrom(BUFF_SIZE)
         print('GOT connection from ', sv_addr, ', Client type is ', str(msg))
         sv_socket.sendto(b'Confirmed', sv_addr)
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+        sv_socket.settimeout(5)
         while True:
             try:
                 packet, _ = sv_socket.recvfrom(BUFF_SIZE)
@@ -88,14 +90,16 @@ def find_video_sender():
 
 def find_audio_sender():
     # initial socket setup
-    sa_socket.settimeout(5)
+    sa_socket.settimeout(500)
     while True:
+
         sa_socket.bind((host_ip, sa_port))
+
         print('Listening at:', (host_ip, sa_port))
         msg, sa_addr = sa_socket.recvfrom(BUFF_SIZE)
         print('GOT connection from ', sa_addr, ', Client type is ', str(msg))
         sa_socket.sendto(b'Confirmed', sa_addr)
-
+        sa_socket.settimeout(5)
         while True:
             try:
                 packet, _ = sa_socket.recvfrom(BUFF_SIZE)
