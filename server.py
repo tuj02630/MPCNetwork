@@ -55,47 +55,56 @@ def find_video_receiver():
 
 
 def find_video_sender():
-    sv_socket.bind((host_ip, sv_port))
-    print('Listening at:', (host_ip, sv_port))
-    msg, sv_addr = sv_socket.recvfrom(BUFF_SIZE)
-    print('GOT connection from ', sv_addr, ', Client type is ', str(msg))
-    sv_socket.sendto(b'Confirmed', sv_addr)
-    fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+    sv_socket.settimeout(5)
     while True:
-        packet, _ = sv_socket.recvfrom(BUFF_SIZE)
-        data = base64.b64decode(packet, ' /')
-        data = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
-        if found_rv_client:
-            rv_socket.sendto(packet, rv_addr)
-        if cnt == frames_to_count:
-            # noinspection PyBroadException
+        sv_socket.bind((host_ip, sv_port))
+        print('Listening at:', (host_ip, sv_port))
+        msg, sv_addr = sv_socket.recvfrom(BUFF_SIZE)
+        print('GOT connection from ', sv_addr, ', Client type is ', str(msg))
+        sv_socket.sendto(b'Confirmed', sv_addr)
+        fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+        while True:
             try:
-                fps = round(frames_to_count / (time.time() - st))
-                st = time.time()
-                cnt = 0
-            except:
-                pass
-        cnt += 1
+                packet, _ = sv_socket.recvfrom(BUFF_SIZE)
+            except TimeoutError:
+
+                sv_socket.close()
+                break
+            data = base64.b64decode(packet, ' /')
+
+            data = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
+            if found_rv_client:
+                rv_socket.sendto(packet, rv_addr)
+            if cnt == frames_to_count:
+                # noinspection PyBroadException
+                try:
+                    fps = round(frames_to_count / (time.time() - st))
+                    st = time.time()
+                    cnt = 0
+                except:
+                    pass
+            cnt += 1
 
 
 def find_audio_sender():
     # initial socket setup
-    sa_socket.bind((host_ip, sa_port))
-    print('Listening at:', (host_ip, sa_port))
-    msg, sa_addr = sa_socket.recvfrom(BUFF_SIZE)
-    print('GOT connection from ', sa_addr, ', Client type is ', str(msg))
-    sa_socket.sendto(b'Confirmed', sa_addr)
-    sa_socket.settimeout(300)
+    sa_socket.settimeout(5)
     while True:
-        try:
-            packet, _ = sa_socket.recvfrom(BUFF_SIZE)
-        except TimeoutError:
-            sa_socket.close()
-            break
-        data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
-        if found_ra_client:
-            ra_socket.sendto(packet, ra_addr)
-    return
+        sa_socket.bind((host_ip, sa_port))
+        print('Listening at:', (host_ip, sa_port))
+        msg, sa_addr = sa_socket.recvfrom(BUFF_SIZE)
+        print('GOT connection from ', sa_addr, ', Client type is ', str(msg))
+        sa_socket.sendto(b'Confirmed', sa_addr)
+
+        while True:
+            try:
+                packet, _ = sa_socket.recvfrom(BUFF_SIZE)
+            except TimeoutError:
+                sa_socket.close()
+                break
+            data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
+            if found_ra_client:
+                ra_socket.sendto(packet, ra_addr)
 
 
 def find_audio_receiver():
