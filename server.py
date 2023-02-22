@@ -1,14 +1,14 @@
-# This is client code to receive video frames over UDP
 import base64
 import time
 import numpy
 import socket
 import threading
 import pyaudio
-import winsound
+
 # socket setup
 BUFF_SIZE = 65536
 host_ip = '44.212.17.188'
+host_ip = '127.0.0.1'
 sv_port = 9999  # sender video port
 sa_port = 9998  # sender audio port
 rv_port = 8888  # receiver video port
@@ -68,7 +68,6 @@ def find_video_sender():
         data = numpy.frombuffer(data, dtype)  # the actual data if the server wants to do anything with it
         if found_rv_client:
             rv_socket.sendto(packet, rv_addr)
-
         if cnt == frames_to_count:
             # noinspection PyBroadException
             try:

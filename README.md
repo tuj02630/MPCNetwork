@@ -1,9 +1,10 @@
 # Quick Setup:
 pip install opencv-python\
 pip install imutils\
-pip install pybluez
+pip install pybluez\
+pip install pyaudio
 
-Resource used:
+# Resource used:
 
 https://pyshine.com/Send-video-over-UDP-socket-in-Python/
 

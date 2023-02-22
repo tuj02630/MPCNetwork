@@ -1,5 +1,5 @@
-# This is server code to send video frames over UDP
 import base64
+import os
 import time
 import cv2
 import imutils
@@ -16,7 +16,6 @@ CHANNELS = 2
 RATE = 44100
 FRAMES_PER_BUFFER = 1000
 
-
 BUFF_SIZE = 65536
 vid_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 vid_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
@@ -24,6 +23,7 @@ aud_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
+host_ip = '127.0.0.1'
 # host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
 v_port = 9999
 a_port = 9998
@@ -51,7 +51,7 @@ def audio_sending_thread():
 def video_sending_thread():
     vid = cv2.VideoCapture(0)  # replace 'rocket.mp4' with 0 for webcam
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-
+    title = 'SENDING VIDEO ' + str(os.getpid())
     vid_socket.settimeout(15)
     vid_socket.sendto(b'CLIENT_TYPE_SV', v_addr)
     try:
@@ -67,8 +67,7 @@ def video_sending_thread():
             message = base64.b64encode(buffer)
             vid_socket.sendto(message, v_addr)
             frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            cv2.imshow('TRANSMITTING VIDEO', frame)
-            cv2.setWindowTitle('TRANSMITTING VIDEO', 'TRANSMITTING VIDEO ' + str(fps))
+            cv2.imshow(title, frame)
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 vid_socket.close()
