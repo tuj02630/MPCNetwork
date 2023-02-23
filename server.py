@@ -64,6 +64,15 @@ class Server:
         self.semi.release()
         return
 
+    def find_audio_receiver(self):
+        self.ra_socket.bind((self.host_ip, self.ra_port))
+        print('Listening at:', (self.host_ip, self.ra_port))
+        msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
+        print('GOT connection from ', self.ra_addr, ', Client type is ', str(msg))
+        self.found_ra_client = True
+        self.semi.release()
+        return
+
     def sender_setup(self, socket: socket.socket, port: int):
         socket.settimeout(500)
         socket.bind((self.host_ip, port))
@@ -119,15 +128,6 @@ class Server:
             if data is None:
                 return
 
-    def find_audio_receiver(self):
-        self.ra_socket.bind((self.host_ip, self.ra_port))
-        print('Listening at:', (self.host_ip, self.ra_port))
-        msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
-        print('GOT connection from ', self.ra_addr, ', Client type is ', str(msg))
-        self.found_ra_client = True
-        self.semi.release()
-        return
-
     def run(self):
         vid_sender_thread = Thread(target=self.find_video_sender)
         aud_sender_thread = Thread(target=self.find_audio_sender)
@@ -154,3 +154,4 @@ if __name__ == "__main__":
     server.run()
     # server = Server(lock, semi)
     # server.run()
+
