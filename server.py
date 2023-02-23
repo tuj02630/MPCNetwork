@@ -50,10 +50,9 @@ class Server:
         if self.lock.locked():
             print("Locked")
         self.lock.acquire()
-        time.sleep(0.25)
         for i in range(4):
             self.semi.acquire()
-
+        self.lock.release()
 
     def find_video_receiver(self):
         self.rv_socket.bind((self.host_ip, self.rv_port))
@@ -65,73 +64,60 @@ class Server:
         self.semi.release()
         return
 
+    def sender_setup(self, socket: socket.socket, port: int):
+        socket.settimeout(500)
+        socket.bind((self.host_ip, port))
+        print('Listening at:', (self.host_ip, port))
+        msg, addr = socket.recvfrom(self.BUFF_SIZE)
+        print('GOT connection from ', addr, ', Client type is ', str(msg))
+        socket.sendto(b'Confirmed', addr)
+        socket.settimeout(5)
+        return (msg, addr)
+
+    def sender_operation(self, sender_socket: socket.socket, receiver_socket: socket.socket, addr, found_client: bool):
+        if not self.active:
+            return None
+        try:
+            packet, _ = sender_socket.recvfrom(self.BUFF_SIZE)
+        except socket.timeout:
+            print("Timeout video here")
+            sender_socket.close()
+            self.stop()
+
+            return None
+
+        data = base64.b64decode(packet, ' /')
+
+        if found_client:
+            receiver_socket.sendto(packet, addr)
+
+        return data
+
     def find_video_sender(self):
-        self.sv_socket.settimeout(500)
-
-        self.sv_socket.bind((self.host_ip, self.sv_port))
-        print('Listening at:', (self.host_ip, self.sv_port))
-        msg, self.sv_addr = self.sv_socket.recvfrom(self.BUFF_SIZE)
-        print('GOT connection from ', self.sv_addr, ', Client type is ', str(msg))
-        self.sv_socket.sendto(b'Confirmed', self.sv_addr)
+        msg, self.sv_addr = self.sender_setup(self.sv_socket, self.sv_port)
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-        self.sv_socket.settimeout(5)
         while True:
-            if not self.active:
-                self.semi.release()
-                self.lock.release()
+            data = self.sender_operation(self.sv_socket, self.rv_socket, self.rv_addr, self.found_rv_client)
+            if data is None:
                 return
-            try:
-                packet, _ = self.sv_socket.recvfrom(self.BUFF_SIZE)
-            except socket.timeout:
-                print("Timeout video here")
-                self.sv_socket.close()
-                self.lock.release()
-                self.stop()
-
-                return
-            data = base64.b64decode(packet, ' /')
-
-            data = numpy.frombuffer(data, self.dtype)  # the actual data if the server wants to do anything with it
-            if self.found_rv_client:
-                self.rv_socket.sendto(packet, self.rv_addr)
-            if cnt == frames_to_count:
-                # noinspection PyBroadException
-                try:
-                    fps = round(frames_to_count / (time.time() - st))
-                    st = time.time()
-                    cnt = 0
-                except:
-                    pass
-            cnt += 1
+            ##### Analysis
+            # data = numpy.frombuffer(data, self.dtype)  # the actual data if the server wants to do anything with it
+            # if cnt == frames_to_count:
+            #     # noinspection PyBroadException
+            #     try:
+            #         fps = round(frames_to_count / (time.time() - st))
+            #         st = time.time()
+            #         cnt = 0
+            #     except:
+            #         pass
+            # cnt += 1
 
     def find_audio_sender(self):
-        # initial socket setup
-        self.sa_socket.settimeout(500)
-        self.sa_socket.bind((self.host_ip, self.sa_port))
-
-        print('Listening at:', (self.host_ip, self.sa_port))
-        msg, self.sa_addr = self.sa_socket.recvfrom(self.BUFF_SIZE)
-        print('GOT connection from ', self.sa_addr, ', Client type is ', str(msg))
-        self.sa_socket.sendto(b'Confirmed', self.sa_addr)
-        self.sa_socket.settimeout(5)
+        msg, self.sa_addr = self.sender_setup(self.sa_socket, self.sa_port)
         while True:
-            if not self.active:
-                self.stop()
-                self.semi.release()
-                self.lock.release()
+            data = self.sender_operation(self.sa_socket, self.ra_socket, self.ra_addr, self.found_ra_client)
+            if data is None:
                 return
-            try:
-                packet, _ = self.sa_socket.recvfrom(self.BUFF_SIZE)
-            except socket.timeout:
-                self.sa_socket.close()
-                print("Timeout audio here")
-                self.semi.release()
-                self.stop()
-
-                return
-            data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
-            if self.found_ra_client:
-                self.ra_socket.sendto(packet, self.ra_addr)
 
     def find_audio_receiver(self):
         self.ra_socket.bind((self.host_ip, self.ra_port))
@@ -159,7 +145,6 @@ class Server:
 
     def stop(self):
         self.active = False
-        lock.release()
 
 
 if __name__ == "__main__":
@@ -167,6 +152,5 @@ if __name__ == "__main__":
     lock = Lock()
     server = Server(lock, semi)
     server.run()
-    server = Server(lock, semi)
-    server.run()
-
+    # server = Server(lock, semi)
+    # server.run()
