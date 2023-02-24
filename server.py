@@ -7,8 +7,8 @@ from threading import *
 
 class Server:
     def __init__(self,
-                 r_lock: Lock,
                  s_lock: Lock,
+                 r_lock: Lock,
                 sv_port_lock: Lock,
                 rv_port_lock: Lock,
                 sa_port_lock: Lock,
@@ -66,6 +66,7 @@ class Server:
         try:
             self.rv_socket.bind((self.host_ip, self.rv_port))
         except OSError:
+            self.rv_port_lock.release()
             return
 
         print('Listening at:', (self.host_ip, self.rv_port))
@@ -79,7 +80,11 @@ class Server:
 
 
     def find_audio_receiver(self):
-        self.ra_socket.bind((self.host_ip, self.ra_port))
+        try:
+            self.ra_socket.bind((self.host_ip, self.ra_port))
+        except OSError:
+            self.ra_port_lock.release()
+            return
         print('Listening at:', (self.host_ip, self.ra_port))
         msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
         print('GOT connection from ', self.ra_addr, ', Client type is ', str(msg))
@@ -155,25 +160,24 @@ class Server:
 
 
     def run(self):
-        self.server_lock.acquire()
+
+        self.s_lock.acquire()
         vid_sender_thread = Thread(target=self.find_video_sender)
         aud_sender_thread = Thread(target=self.find_audio_sender)
+        self.sv_port_lock.acquire()
+        self.sa_port_lock.acquire()
+        vid_sender_thread.start()
+        aud_sender_thread.start()
+        self.s_lock.release()
+
+        self.r_lock.acquire()
         vid_receiver_thread = Thread(target=self.find_video_receiver)
         aud_receiver_thread = Thread(target=self.find_audio_receiver)
-
-        self.thread_array.append(vid_sender_thread)
-        self.thread_array.append(aud_sender_thread)
-        self.thread_array.append(vid_receiver_thread)
-        self.thread_array.append(aud_receiver_thread)
-
-        for thread in self.thread_array:
-            thread.start()
-            time.sleep(0.25)
-
-        self.sv_port_lock.acquire()
         self.rv_port_lock.acquire()
-        self.sa_port_lock.acquire()
         self.ra_port_lock.acquire()
+        vid_receiver_thread.start()
+        aud_receiver_thread.start()
+        self.r_lock.release()
 
 
     def stop(self):
@@ -181,20 +185,21 @@ class Server:
         if self.active == True:
             self.active = False
             print("Stoppeds")
-            self.server_lock.release()
+            self.s_lock.release()
         self.stop_lock.release()
 
 
 if __name__ == "__main__":
-    server_lock = Lock()
+    r_lock = Lock()
+    s_lock = Lock()
     sv_port_lock = Lock()
     rv_port_lock = Lock()
     sa_port_lock = Lock()
     ra_port_lock = Lock()
 
-    server = Server(server_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
+    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
     server.run()
 
-    server = Server(server_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
+    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
     server.run()
 
