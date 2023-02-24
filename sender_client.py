@@ -23,7 +23,7 @@ aud_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
-host_ip = '127.0.0.1'
+# host_ip = '127.0.0.1'
 # host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
 v_port = 9999
 a_port = 9998

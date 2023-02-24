@@ -17,7 +17,7 @@ aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 
 host_name = socket.gethostname()
 host_ip = '44.212.17.188'
-host_ip = '127.0.0.1'
+# host_ip = '127.0.0.1'
 
 v_port = 8888
 a_port = 8887
