@@ -59,7 +59,7 @@ def video_receiving_thread():
     vid_socket.sendto(message, v_addr)
     vid_socket.settimeout(300)
     try:
-        msg, server_t_addr = vid_socket.recvfrom(BUFF_SIZE)
+        msg, server_addr = vid_socket.recvfrom(BUFF_SIZE)
     except TimeoutError or ConnectionResetError:
         print("No response from server. Is it running?")
         exit(1)
