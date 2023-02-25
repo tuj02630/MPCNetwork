@@ -7,12 +7,11 @@ from threading import *
 
 class Server:
     def __init__(self,
-                 s_lock: Lock,
-                 r_lock: Lock,
-                sv_port_lock: Lock,
-                rv_port_lock: Lock,
-                sa_port_lock: Lock,
-                ra_port_lock: Lock):
+                 server_lock: Lock,
+                 sv_port_lock: Lock,
+                 rv_port_lock: Lock,
+                 sa_port_lock: Lock,
+                 ra_port_lock: Lock):
         # socket setup
         self.BUFF_SIZE = 65536
         self.host_ip = '172.31.12.186'
@@ -54,72 +53,53 @@ class Server:
 
         self.active = True
 
-        self.r_lock = r_lock
-        self.s_lock = s_lock
+        self.server_lock = server_lock
         self.sv_port_lock = sv_port_lock
         self.rv_port_lock = rv_port_lock
         self.sa_port_lock = sa_port_lock
         self.ra_port_lock = ra_port_lock
 
-
     def find_video_receiver(self):
-        try:
-            self.rv_socket.bind((self.host_ip, self.rv_port))
-        except OSError:
-            self.rv_port_lock.release()
-            return
-
+        self.rv_socket.bind((self.host_ip, self.rv_port))
         print('Listening at:', (self.host_ip, self.rv_port))
         rc_msg, self.rv_addr = self.rv_socket.recvfrom(self.BUFF_SIZE)
-        print(self.rv_addr)
         print('GOT connection from ', self.rv_addr, ', Client type is ', str(rc_msg))
         self.rv_socket.sendto(b'Confirmed', self.rv_addr)
         self.found_rv_client = True
-        self.rv_port_lock.release()
         return
 
-
     def find_audio_receiver(self):
-        try:
-            self.ra_socket.bind((self.host_ip, self.ra_port))
-        except OSError:
-            self.ra_port_lock.release()
-            return
+        self.ra_socket.bind((self.host_ip, self.ra_port))
         print('Listening at:', (self.host_ip, self.ra_port))
         msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
         print('GOT connection from ', self.ra_addr, ', Client type is ', str(msg))
         self.found_ra_client = True
-        self.ra_port_lock.release()
         return
-
 
     def sender_setup(self, socket: socket.socket, port: int):
         socket.settimeout(500)
-        try:
-            socket.bind((self.host_ip, port))
-        except OSError:
-            return None
+        socket.bind((self.host_ip, port))
         print('Listening at:', (self.host_ip, port))
         msg, addr = socket.recvfrom(self.BUFF_SIZE)
         print('GOT connection from ', addr, ', Client type is ', str(msg))
         socket.sendto(b'Confirmed', addr)
-        socket.settimeout(5)
+        socket.settimeout(0.5)
         return (msg, addr)
-
 
     def sender_operation(self, port_lock: Lock, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
                          found_client: bool):
-        if not self.active:
-            return None
         try:
             packet, _ = sender_socket.recvfrom(self.BUFF_SIZE)
         except socket.timeout:
-            print("Timeout video here")
-            sender_socket.close()
-            port_lock.release()
+            print("Timeout here")
             self.stop()
-
             return None
+        except OSError:
+            if not self.active:
+                print("Timeout OS here")
+                return None
+            else:
+                print("Something wrong")
 
         data = base64.b64decode(packet, ' /')
 
@@ -127,7 +107,6 @@ class Server:
             receiver_socket.sendto(packet, addr)
 
         return data
-
 
     def find_video_sender(self):
         msg, self.sv_addr = self.sender_setup(self.sv_socket, self.sv_port)
@@ -149,7 +128,6 @@ class Server:
             #         pass
             # cnt += 1
 
-
     def find_audio_sender(self):
         msg, self.sa_addr = self.sender_setup(self.sa_socket, self.sa_port)
         while True:
@@ -158,48 +136,50 @@ class Server:
             if data is None:
                 return
 
-
     def run(self):
 
-        self.s_lock.acquire()
+        self.server_lock.acquire()
+        time.sleep(1)
         vid_sender_thread = Thread(target=self.find_video_sender)
         aud_sender_thread = Thread(target=self.find_audio_sender)
         self.sv_port_lock.acquire()
         self.sa_port_lock.acquire()
         vid_sender_thread.start()
         aud_sender_thread.start()
-        self.s_lock.release()
 
-        self.r_lock.acquire()
         vid_receiver_thread = Thread(target=self.find_video_receiver)
         aud_receiver_thread = Thread(target=self.find_audio_receiver)
         self.rv_port_lock.acquire()
         self.ra_port_lock.acquire()
         vid_receiver_thread.start()
         aud_receiver_thread.start()
-        self.r_lock.release()
-
 
     def stop(self):
         self.stop_lock.acquire()
         if self.active == True:
             self.active = False
             print("Stoppeds")
-            self.s_lock.release()
+            self.sa_socket.close()
+            self.ra_socket.close()
+            self.sv_socket.close()
+            self.rv_socket.close()
+            self.sv_port_lock.release()
+            self.sa_port_lock.release()
+            self.ra_port_lock.release()
+            self.rv_port_lock.release()
+            self.server_lock.release()
+
         self.stop_lock.release()
 
 
 if __name__ == "__main__":
-    r_lock = Lock()
-    s_lock = Lock()
+    server_lock = Lock()
     sv_port_lock = Lock()
     rv_port_lock = Lock()
     sa_port_lock = Lock()
     ra_port_lock = Lock()
 
-    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
-    server.run()
-
-    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
-    server.run()
+    while True:
+        server = Server(server_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
+        server.run()
 
