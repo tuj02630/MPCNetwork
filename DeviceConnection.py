@@ -29,7 +29,8 @@ class DeviceConnection(threading.Thread):
     sv_addr: tuple = ('', 0)
     sa_addr: tuple = ('', 0)
 
-
+    def __init__(self):
+        return self
 
     def run(self):
         # local communication
