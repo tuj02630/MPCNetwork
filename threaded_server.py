@@ -19,7 +19,7 @@ def thread_receive(*thread_receive_args):
     server_t_socket.sendto(message, client_address)
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
     title = 'RECEIVING VIDEO ' + str(threading.get_ident())
-    server_t_socket.settimeout(15)
+    server_t_socket.settimeout(15) # set the timeout on the socket for 15 seconds
     while True:
         try:
             packet, _ = server_t_socket.recvfrom(BUFF_SIZE)
