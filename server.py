@@ -6,6 +6,9 @@ from threading import *
 
 
 class Server:
+    """
+    Server class that will be running in server and manages the connection from clients
+    """
     def __init__(self,
                  server_lock: Lock,
                  sv_port_lock: Lock,
@@ -13,26 +16,37 @@ class Server:
                  sa_port_lock: Lock,
                  ra_port_lock: Lock):
         # socket setup
+        """Data buffer size for the video and audio stream"""
         self.BUFF_SIZE = 65536
+        """Private ip for the server"""
         self.host_ip = '172.31.12.186'
         # self.host_ip = '127.0.0.1'
+        """Port that is used to send video data"""
         self.sv_port = 9999  # sender video port
+        """Port that is used to send audio data"""
         self.sa_port = 9998  # sender audio port
+        """Port that is used to receive video data"""
         self.rv_port = 8888  # receiver video port
+        """Port that is used to receive audio data"""
         self.ra_port = 8887  # receiver audio port
         self.host_name = socket.gethostname()
         # S: Sending
         # R: Receiving
         # V: Video
         # A: Audio
+        """Video socket to receive video data from the server"""
         self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        """Video socket to send video data from the server"""
         self.sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        """Audio socket to send audio data from the server"""
         self.sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        """Audio socket to receive audio data from the server"""
         self.ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+
         self.dtype = numpy.uint8
 
         # audio settings are unused here but i figure it can't hurt to have them on the server
@@ -43,7 +57,9 @@ class Server:
         self.FRAMES_PER_BUFFER = 1000
 
         # other variables
+        """Thread list to store video and audio thread"""
         self.thread_array = []
+        """Flag for the """
         self.found_rv_client = False
         self.found_ra_client = False
         self.rv_addr = ('', 0)
@@ -52,12 +68,18 @@ class Server:
         self.stop_lock = Lock()
 
         self.active = True
+        """Flag to indicate the status of server instance"""
 
         self.server_lock = server_lock
+        """Lock to secure the server instance from the threads"""
         self.sv_port_lock = sv_port_lock
+        """Lock to secure the send video port"""
         self.rv_port_lock = rv_port_lock
+        """Lock to secure the receive video port"""
         self.sa_port_lock = sa_port_lock
+        """Lock to secure the send audio port"""
         self.ra_port_lock = ra_port_lock
+        """Lock to secure the receive audio port"""
 
     def find_video_receiver(self):
         self.rv_socket.bind((self.host_ip, self.rv_port))
