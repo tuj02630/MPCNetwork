@@ -161,7 +161,7 @@ class Server:
         socket.settimeout(0.5)
         return (msg, addr)
 
-    def sender_operation(self, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
+    def sender_operation(self, port_lock: Lock, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
                          found_client: bool):
         """
             Method used to operate the live stream feature. The method only updates the video for a frame
