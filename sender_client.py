@@ -9,6 +9,7 @@ import pyaudio
 
 
 class SenderClient:
+    """Reference for Sender Client, the network script in the camera. Used to send video and audio to the server"""
     def __init__(self):
         self.thread_array = []
 
@@ -34,8 +35,13 @@ class SenderClient:
         self.a_addr = (self.host_ip, self.a_port)
         self.WIDTH = 400
 
-
     def audio_sending_thread(self):
+        """
+            Thread for sending audio to the server
+            Parameters: None
+            Returns: None
+            Loops while getting audio from device microphone and sends that over UDP to the server
+        """
         self.aud_socket.sendto(b'CLIENT_TYPE_SA', self.a_addr)
         try:
             self.aud_socket.recvfrom(self.BUFF_SIZE)
@@ -43,15 +49,21 @@ class SenderClient:
             print("No response from server. Is it running?")
             exit(1)
         p = pyaudio.PyAudio()
-        stream = p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
+        stream = p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True,
+                        frames_per_buffer=self.CHUNK)
         while True:
             data = stream.read(self.FRAMES_PER_BUFFER)
             # print(data)
             data = base64.b64encode(data)
             self.aud_socket.sendto(data, self.a_addr)
 
-
     def video_sending_thread(self):
+        """
+            Thread for sending video to the server
+            Parameters: None
+            Returns: None
+            Loops while getting video from device camera and sends that over UDP to the server
+        """
         vid = cv2.VideoCapture(0)  # replace 'rocket.mp4' with 0 for webcam
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
         title = 'SENDING VIDEO ' + str(os.getpid())
@@ -86,6 +98,13 @@ class SenderClient:
                 cnt += 1
 
     def run(self):
+        """
+           Inherited from Thread
+           Parameters:
+           None
+           Returns:
+           None
+       """
         vid_send_thread = threading.Thread(target=self.video_sending_thread)
         aud_send_thread = threading.Thread(target=self.audio_sending_thread)
         self.thread_array.append(vid_send_thread)
