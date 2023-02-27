@@ -82,6 +82,17 @@ class Server:
         """Lock to secure the receive audio port"""
 
     def find_video_receiver(self):
+        """
+            The function tries to find the receiver clients that is accessing the video receiver port.
+            The function will run in the thread and act as callback function.
+            Once connection is secured with receiver client, the video feed from the sender client will be passed to the receiver client
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         self.rv_socket.bind((self.host_ip, self.rv_port))
         print('Listening at:', (self.host_ip, self.rv_port))
         rc_msg, self.rv_addr = self.rv_socket.recvfrom(self.BUFF_SIZE)
@@ -91,6 +102,17 @@ class Server:
         return
 
     def find_audio_receiver(self):
+        """
+            The function tries to find the receiver clients that is accessing the audio receiver port.
+            The function will run in the thread and act as callback function.
+            Once connection is secured with receiver client, the audio feed from the sender client will be passed to the receiver client
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         self.ra_socket.bind((self.host_ip, self.ra_port))
         print('Listening at:', (self.host_ip, self.ra_port))
         msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
@@ -99,6 +121,21 @@ class Server:
         return
 
     def sender_setup(self, socket: socket.socket, port: int):
+        """
+            Set-up method for the sender client connection. The method will set timeout as 500 seconds
+            and the thread will wait for the connection
+
+            Parameters:
+
+            socket: socket.socket -> socket for the sender thread. Socket will be bind to the given port
+
+            port: int -> port number that is used to establish the connection.
+
+            Returns:
+
+            tuple of message and address -> Message from the client for the successful connection
+            and address that is used to send video data
+        """
         socket.settimeout(500)
         socket.bind((self.host_ip, port))
         print('Listening at:', (self.host_ip, port))
@@ -108,8 +145,30 @@ class Server:
         socket.settimeout(0.5)
         return (msg, addr)
 
-    def sender_operation(self, port_lock: Lock, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
+    def sender_operation(self, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
                          found_client: bool):
+        """
+            Method used to operate the live stream feature. The method only updates the video for a frame
+            so it should be run in a loop to continuously update the live stream video.
+            The method receives the data from the sender client and sends the data to the receiver client
+            to simulate the live stream feature.
+
+            Parameters:
+
+            sender_socket: socket.socket -> Socket for the sender client, which sends the data to server
+
+            receiver_socket: socket.socket -> Socket for the receiver client, which the server sends the data to
+
+            port: int -> port number that is used to establish the connection.
+
+            addr: String -> Address to send the data.
+            Returns:
+
+            found_client: bool -> True if the receiver client is found and ready to send data to it.
+
+            data: numarray[] -> data that is sent to the receiver in the operation.
+            Data is returned to be analyzed later.
+        """
         try:
             packet, _ = sender_socket.recvfrom(self.BUFF_SIZE)
         except socket.timeout:
@@ -131,10 +190,22 @@ class Server:
         return data
 
     def find_video_sender(self):
+        """
+            The function tries to find the video sender clients that is accessing the video sender port.
+            The function will run in the thread and act as callback function.
+            Once the video sender is found, the server receives the video data and sends it to the receiver client if it is found
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
+
         msg, self.sv_addr = self.sender_setup(self.sv_socket, self.sv_port)
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
         while True:
-            data = self.sender_operation(self.sv_port_lock, self.sv_socket, self.rv_socket, self.rv_addr,
+            data = self.sender_operation(self.sv_socket, self.rv_socket, self.rv_addr,
                                          self.found_rv_client)
             if data is None:
                 return
@@ -151,6 +222,17 @@ class Server:
             # cnt += 1
 
     def find_audio_sender(self):
+        """
+            The function tries to find the audio sender clients that is accessing the audio sender port.
+            The function will run in the thread and act as callback function.
+            Once the audio sender is found, the server receives the audio data and sends it to the receiver client if it is found
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         msg, self.sa_addr = self.sender_setup(self.sa_socket, self.sa_port)
         while True:
             data = self.sender_operation(self.sa_port_lock, self.sa_socket, self.ra_socket, self.ra_addr,
@@ -159,7 +241,15 @@ class Server:
                 return
 
     def run(self):
+        """
+            Method to start the server class. The method will start multiple threads that are needed for the server operations.
 
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         self.server_lock.acquire()
         time.sleep(1)
         vid_sender_thread = Thread(target=self.find_video_sender)
@@ -177,6 +267,15 @@ class Server:
         aud_receiver_thread.start()
 
     def stop(self):
+        """
+            Stops the server instance and release all of locks
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         self.stop_lock.acquire()
         if self.active == True:
             self.active = False
