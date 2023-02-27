@@ -33,6 +33,12 @@ WIDTH = 400
 
 
 def audio_sending_thread():
+    """
+        Thread for sending audio to the server
+        Parameters: None
+        Returns: None
+        Loops while getting audio from device microphone and sends that over UDP to the server
+    """
     aud_socket.sendto(b'CLIENT_TYPE_SA', a_addr)
     try:
         aud_socket.recvfrom(BUFF_SIZE)
@@ -49,6 +55,12 @@ def audio_sending_thread():
 
 
 def video_sending_thread():
+    """
+        Thread for sending video to the server
+        Parameters: None
+        Returns: None
+        Loops while getting video from device camera and sends that over UDP to the server
+    """
     vid = cv2.VideoCapture(0)  # replace 'rocket.mp4' with 0 for webcam
     fps, st, frames_to_count, cnt = (0, 0, 20, 0)
     title = 'SENDING VIDEO ' + str(os.getpid())

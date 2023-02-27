@@ -1,20 +1,25 @@
 import base64
-import io
 import socket
 import threading
 import time
-import cv2
 import numpy
 
 BUFF_SIZE = 65536
 dtype = numpy.uint8
 
-local_ip = '127.0.0.1'
+loopback = '127.0.0.1'
 local_v_port = 3000
 local_a_port = 3001
 
+sv_port = 50010
+sa_port = 50020
 
-class DeviceConnection(threading.Thread):
+
+class DeviceConnection:
+    device_id = ""
+
+    client_ip = ''
+    client_port = 0
     thread_array = []
     rv_socket: socket.socket
     ra_socket: socket.socket
@@ -29,33 +34,38 @@ class DeviceConnection(threading.Thread):
     sv_addr: tuple = ('', 0)
     sa_addr: tuple = ('', 0)
 
-    def __init__(self):
-        return self
+    rv_ready_event = threading.Event()
+    ra_ready_event = threading.Event()
+    sv_ready_event = threading.Event()
+    sa_ready_event = threading.Event()
 
-    def run(self):
+    def __init__(self, client_addr: tuple):
+        self.client_ip, self.client_port = client_addr
         # local communication
         self.rv_to_sv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rv_to_sv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         self.ra_to_sa = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.ra_to_sa.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.rv_to_sv.bind((local_ip, local_v_port))
-        self.ra_to_sa.bind((local_ip, local_a_port))
+        self.rv_to_sv.bind((loopback, local_v_port))
+        self.ra_to_sa.bind((loopback, local_a_port))
         # threads
         self.thread_array.append(threading.Thread(target=self.video_receiver_thread))
         self.thread_array.append(threading.Thread(target=self.audio_receiver_thread))
-        self.thread_array.append(threading.Thread(target=self.video_sender_thread))
+        # self.thread_array.append(threading.Thread(target=self.video_sender_thread))
         self.thread_array.append
         for thread in self.thread_array:
             thread.start()
 
     def video_receiver_thread(self):
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+        self.rv_addr = (self.client_ip, sv_port)
         self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        # self.rv_socket.sendto(b'Audio Confirmation', REPLACE_ME_WITH_ADDR)
+        self.rv_socket.sendto(b'Audio Confirmation', self.rv_addr)
         while True:
             packet, _ = self.rv_socket.recvfrom(BUFF_SIZE)
-            self.rv_to_sv.sendto(packet, (local_ip, local_v_port))
+            if self.sv_ready_event.is_set():
+                self.rv_to_sv.sendto(packet, (loopback, local_v_port))
             if cnt == frames_to_count:
                 # noinspection PyBroadException
                 try:
@@ -65,13 +75,22 @@ class DeviceConnection(threading.Thread):
                 except:
                     pass
             cnt += 1
-
         return
 
     def audio_receiver_thread(self):
-        self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.rv_socket.sendto(b'Audio Confirmation', sock)
+        self.rv_addr = (self.client_ip, sa_port)
+        self.ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+        self.ra_socket.sendto(b'Audio Confirmation', self.ra_addr)
+        while True:
+            try:
+                packet, _ = self.ra_socket.recvfrom(BUFF_SIZE)
+            except TimeoutError:
+                self.ra_socket.close()
+                break
+            data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
+            if self.sa_ready_event.is_set():
+                self.ra_to_sa.sendto(packet, (loopback, local_a_port))
         return
 
     def video_sender_thread(self):
@@ -85,4 +104,10 @@ class DeviceConnection(threading.Thread):
                 time.sleep(1)
         return
 
-    def set_sv_addr(self, sock:tuple):
+    def set_rv_addr(self, sock: tuple):
+        self.rv_addr = sock
+        self.rv_ready_event.set()
+
+    def set_ra_addr(self, sock: tuple):
+        self.ra_addr = sock
+        self.ra_ready_event.set()
