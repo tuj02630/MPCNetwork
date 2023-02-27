@@ -9,14 +9,15 @@ class Server:
     """
     Server class that will be running in server and manages the connection from clients
     """
+
     def __init__(self,
-                 server_lock: Lock,
+                 s_lock: Lock,
+                 r_lock: Lock,
                  sv_port_lock: Lock,
                  rv_port_lock: Lock,
                  sa_port_lock: Lock,
                  ra_port_lock: Lock):
         # socket setup
-
         self.BUFF_SIZE = 65536
         """Data buffer size for the video and audio stream"""
 
@@ -67,7 +68,6 @@ class Server:
         self.FRAMES_PER_BUFFER = 1000
 
         # other variables
-
         self.thread_array = []
         """Thread list to store video and audio thread"""
 
@@ -84,10 +84,11 @@ class Server:
         self.stop_lock = Lock()
 
         self.active = True
-        """Flag to indicate the status of server instance"""
 
-        self.server_lock = server_lock
-        """Lock to secure the server instance from the threads"""
+        self.r_lock = r_lock
+        """Lock for receiver client"""
+        self.s_lock = s_lock
+        """Lock for sender client"""
         self.sv_port_lock = sv_port_lock
         """Lock to secure the send video port"""
         self.rv_port_lock = rv_port_lock
@@ -109,12 +110,19 @@ class Server:
             Returns:
             None
         """
-        self.rv_socket.bind((self.host_ip, self.rv_port))
+        try:
+            self.rv_socket.bind((self.host_ip, self.rv_port))
+        except OSError:
+            self.rv_port_lock.release()
+            return
+
         print('Listening at:', (self.host_ip, self.rv_port))
         rc_msg, self.rv_addr = self.rv_socket.recvfrom(self.BUFF_SIZE)
+        print(self.rv_addr)
         print('GOT connection from ', self.rv_addr, ', Client type is ', str(rc_msg))
         self.rv_socket.sendto(b'Confirmed', self.rv_addr)
         self.found_rv_client = True
+        self.rv_port_lock.release()
         return
 
     def find_audio_receiver(self):
@@ -129,11 +137,16 @@ class Server:
             Returns:
             None
         """
-        self.ra_socket.bind((self.host_ip, self.ra_port))
+        try:
+            self.ra_socket.bind((self.host_ip, self.ra_port))
+        except OSError:
+            self.ra_port_lock.release()
+            return
         print('Listening at:', (self.host_ip, self.ra_port))
         msg, self.ra_addr = self.ra_socket.recvfrom(self.BUFF_SIZE)
         print('GOT connection from ', self.ra_addr, ', Client type is ', str(msg))
         self.found_ra_client = True
+        self.ra_port_lock.release()
         return
 
     def sender_setup(self, socket: socket.socket, port: int):
@@ -153,15 +166,18 @@ class Server:
             and address that is used to send video data
         """
         socket.settimeout(500)
-        socket.bind((self.host_ip, port))
+        try:
+            socket.bind((self.host_ip, port))
+        except OSError:
+            return None
         print('Listening at:', (self.host_ip, port))
         msg, addr = socket.recvfrom(self.BUFF_SIZE)
         print('GOT connection from ', addr, ', Client type is ', str(msg))
         socket.sendto(b'Confirmed', addr)
-        socket.settimeout(0.5)
+        socket.settimeout(5)
         return (msg, addr)
 
-    def sender_operation(self, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
+    def sender_operation(self, port_lock: Lock, sender_socket: socket.socket, receiver_socket: socket.socket, addr,
                          found_client: bool):
         """
             Method used to operate the live stream feature. The method only updates the video for a frame
@@ -185,18 +201,17 @@ class Server:
             data: numarray[] -> data that is sent to the receiver in the operation.
             Data is returned to be analyzed later.
         """
+        if not self.active:
+            return None
         try:
             packet, _ = sender_socket.recvfrom(self.BUFF_SIZE)
         except socket.timeout:
-            print("Timeout here")
+            print("Timeout video here")
+            sender_socket.close()
+            port_lock.release()
             self.stop()
+
             return None
-        except OSError:
-            if not self.active:
-                print("Timeout OS here")
-                return None
-            else:
-                print("Something wrong")
 
         data = base64.b64decode(packet, ' /')
 
@@ -217,11 +232,10 @@ class Server:
             Returns:
             None
         """
-
         msg, self.sv_addr = self.sender_setup(self.sv_socket, self.sv_port)
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
         while True:
-            data = self.sender_operation(self.sv_socket, self.rv_socket, self.rv_addr,
+            data = self.sender_operation(self.sv_port_lock, self.sv_socket, self.rv_socket, self.rv_addr,
                                          self.found_rv_client)
             if data is None:
                 return
@@ -266,21 +280,23 @@ class Server:
             Returns:
             None
         """
-        self.server_lock.acquire()
-        time.sleep(1)
+        self.s_lock.acquire()
         vid_sender_thread = Thread(target=self.find_video_sender)
         aud_sender_thread = Thread(target=self.find_audio_sender)
         self.sv_port_lock.acquire()
         self.sa_port_lock.acquire()
         vid_sender_thread.start()
         aud_sender_thread.start()
+        self.s_lock.release()
 
+        self.r_lock.acquire()
         vid_receiver_thread = Thread(target=self.find_video_receiver)
         aud_receiver_thread = Thread(target=self.find_audio_receiver)
         self.rv_port_lock.acquire()
         self.ra_port_lock.acquire()
         vid_receiver_thread.start()
         aud_receiver_thread.start()
+        self.r_lock.release()
 
     def stop(self):
         """
@@ -296,27 +312,21 @@ class Server:
         if self.active == True:
             self.active = False
             print("Stoppeds")
-            self.sa_socket.close()
-            self.ra_socket.close()
-            self.sv_socket.close()
-            self.rv_socket.close()
-            self.sv_port_lock.release()
-            self.sa_port_lock.release()
-            self.ra_port_lock.release()
-            self.rv_port_lock.release()
-            self.server_lock.release()
-
+            self.s_lock.release()
         self.stop_lock.release()
 
 
 if __name__ == "__main__":
-    server_lock = Lock()
+    r_lock = Lock()
+    s_lock = Lock()
     sv_port_lock = Lock()
     rv_port_lock = Lock()
     sa_port_lock = Lock()
     ra_port_lock = Lock()
 
-    while True:
-        server = Server(server_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
-        server.run()
+    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
+    server.run()
+
+    server = Server(s_lock, r_lock, sv_port_lock, rv_port_lock, sa_port_lock, ra_port_lock)
+    server.run()
 
