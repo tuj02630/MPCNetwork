@@ -16,35 +16,45 @@ class Server:
                  sa_port_lock: Lock,
                  ra_port_lock: Lock):
         # socket setup
-        """Data buffer size for the video and audio stream"""
+
         self.BUFF_SIZE = 65536
-        """Private ip for the server"""
+        """Data buffer size for the video and audio stream"""
+
         self.host_ip = '172.31.12.186'
+        """Private ip for the server"""
         # self.host_ip = '127.0.0.1'
-        """Port that is used to send video data"""
+
         self.sv_port = 9999  # sender video port
-        """Port that is used to send audio data"""
+        """Port that is used to send video data"""
+
         self.sa_port = 9998  # sender audio port
-        """Port that is used to receive video data"""
+        """Port that is used to send audio data"""
+
         self.rv_port = 8888  # receiver video port
-        """Port that is used to receive audio data"""
+        """Port that is used to receive video data"""
+
         self.ra_port = 8887  # receiver audio port
+        """Port that is used to receive audio data"""
         self.host_name = socket.gethostname()
         # S: Sending
         # R: Receiving
         # V: Video
         # A: Audio
-        """Video socket to receive video data from the server"""
+
         self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Video socket to receive video data from the server"""
         self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        """Video socket to send video data from the server"""
+
         self.sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Video socket to send video data from the server"""
         self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        """Audio socket to send audio data from the server"""
+
         self.sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Audio socket to send audio data from the server"""
         self.sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        """Audio socket to receive audio data from the server"""
+
         self.ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Audio socket to receive audio data from the server"""
         self.ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
 
         self.dtype = numpy.uint8
@@ -57,13 +67,19 @@ class Server:
         self.FRAMES_PER_BUFFER = 1000
 
         # other variables
-        """Thread list to store video and audio thread"""
+
         self.thread_array = []
-        """Flag for the """
+        """Thread list to store video and audio thread"""
+
         self.found_rv_client = False
+        """Flag for if the video receiver client found. If true, the server will send the data to the client"""
         self.found_ra_client = False
+        """Flag for if the audio receiver client found. If true, the server will send the data to the client"""
         self.rv_addr = ('', 0)
+        """Client address for video receiver. The video data will be sent to this address"""
+
         self.ra_addr = ('', 0)
+        """Client address for audio receiver. The audio data will be sent to this address"""
 
         self.stop_lock = Lock()
 
