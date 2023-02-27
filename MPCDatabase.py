@@ -2,12 +2,18 @@ import mysql.connector
 
 
 class MPCDatabase:
+    """Class to perform the database operations such as insert, and retrieve data into and from the database.
+     The class implements the facade design pattern to simplify the database operation and sql commands
+     and make it easier for programmer to interact with database"""
+
     def __init__(self):
-        """Reference for my sql instance. Used to perform query in database"""
+
         self.connection = mysql.connector.connect(host='mpcdb.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
                                                           user='nick',
                                                           password='uJ8nqdEYTRdnIC339wHF',
                                                           database='mpcdb')
+        """Reference for my sql instance. Used to perform query in database"""
+
         with self.connection:
             with self.connection.cursor() as cursor:
                 print("Connection")
