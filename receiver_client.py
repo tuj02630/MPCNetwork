@@ -10,22 +10,39 @@ import pyaudio
 
 class ReceiverClient:
     def __init__(self):
+
         self.thread_array = []
+        """Thread list to store video and audio thread"""
 
         self.BUFF_SIZE = 65536
+        """Data buffer size for the video and audio stream"""
+
         self.vid_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Video socket to receive video data from the server"""
         self.vid_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+
         self.aud_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """Audio socket to receive audio data from the server"""
         self.aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
 
         self.host_name = socket.gethostname()
+        """Server host name"""
+
         self.host_ip = '44.212.17.188'
+        """Server ip"""
         # host_ip = '127.0.0.1'
 
         self.v_port = 8888
+        """Server port for video stream"""
+
         self.a_port = 8887
+        """Server port for audio stream"""
+
         self.v_addr = (self.host_ip, self.v_port)
+        """Server address for video stream"""
+
         self.a_addr = (self.host_ip, self.a_port)
+        """Server address for audio stream"""
 
         # audio settings, might want to make a simple api for these later on
         self.CHUNK = 1024
@@ -36,6 +53,16 @@ class ReceiverClient:
 
 
     def audio_receiving_thread(self):
+        """
+            Callback function to be executed in the audio receiving thread
+            and this function receives the audio data from the server with loop and plays it as it receives.
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         message = b'CLIENT_TYPE_RA'
         self.aud_socket.sendto(message, self.a_addr)
         self.aud_socket.settimeout(300)
@@ -58,6 +85,17 @@ class ReceiverClient:
 
 
     def video_receiving_thread(self):
+        """
+            Callback function to be executed in the video receiving thread
+            and this function receives the video data from the server with loop
+            and update the video image in a video frame
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         message = b'CLIENT_TYPE_RV'
         self.vid_socket.sendto(message, self.v_addr)
         self.vid_socket.settimeout(300)
@@ -97,12 +135,23 @@ class ReceiverClient:
             cnt += 1
 
     def run(self):
+        """
+            Creates two threads, one for video and another for audio live stream to receive
+            and receives video and audio data from the server then updates the frame on the screen to the latest info.
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         vid_receive_thread = threading.Thread(target=self.video_receiving_thread)
         aud_receive_thread = threading.Thread(target=self.audio_receiving_thread)
         self.thread_array.append(vid_receive_thread)
         self.thread_array.append(aud_receive_thread)
         for thread in self.thread_array:
             thread.start()
+
 
 if __name__ == "__main__":
     client = ReceiverClient()

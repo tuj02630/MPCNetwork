@@ -9,9 +9,10 @@ import pyaudio
 
 
 class SenderClient:
+    """Reference for Sender Client, the network script in the camera. Used to send video and audio to the server"""
     def __init__(self):
         self.thread_array = []
-
+        """Thread list to store video and audio thread"""
         # audio settings, might want to make a simple api for these later on
         self.CHUNK = 1024
         self.FORMAT = pyaudio.paInt16
@@ -19,23 +20,46 @@ class SenderClient:
         self.RATE = 44100
         self.FRAMES_PER_BUFFER = 1000
 
-        self.BUFF_SIZE = 65536
+        self.BUFF_SIZE = 6553
+        """Data buffer size for the video and audio stream"""
+
         self.vid_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.vid_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        """Video socket to send video data from the server"""
+
         self.aud_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.aud_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        """Audio socket to send audio data from the server"""
+
         self.host_name = socket.gethostname()
+        """Server host name"""
+
         self.host_ip = '44.212.17.188'
+        """Server ip"""
+
         # self.host_ip = '127.0.0.1'
         # self.host_ip = socket.gethostbyname("ec2-44-212-17-188.compute-1.amazonaws.com")
         self.v_port = 9999
+        """Server port for video stream"""
+
         self.a_port = 9998
+        """Server port for audio stream"""
+
         self.v_addr = (self.host_ip, self.v_port)
+        """Server address for video stream"""
+
         self.a_addr = (self.host_ip, self.a_port)
+        """Server address for audio stream"""
+
         self.WIDTH = 400
 
-
     def audio_sending_thread(self):
+        """
+            Thread for sending audio to the server
+            Parameters: None
+            Returns: None
+            Loops while getting audio from device microphone and sends that over UDP to the server
+        """
         self.aud_socket.sendto(b'CLIENT_TYPE_SA', self.a_addr)
         try:
             self.aud_socket.recvfrom(self.BUFF_SIZE)
@@ -43,15 +67,21 @@ class SenderClient:
             print("No response from server. Is it running?")
             exit(1)
         p = pyaudio.PyAudio()
-        stream = p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
+        stream = p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True,
+                        frames_per_buffer=self.CHUNK)
         while True:
             data = stream.read(self.FRAMES_PER_BUFFER)
             # print(data)
             data = base64.b64encode(data)
             self.aud_socket.sendto(data, self.a_addr)
 
-
     def video_sending_thread(self):
+        """
+            Thread for sending video to the server
+            Parameters: None
+            Returns: None
+            Loops while getting video from device camera and sends that over UDP to the server
+        """
         vid = cv2.VideoCapture(0)  # replace 'rocket.mp4' with 0 for webcam
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
         title = 'SENDING VIDEO ' + str(os.getpid())
@@ -86,6 +116,13 @@ class SenderClient:
                 cnt += 1
 
     def run(self):
+        """
+           Inherited from Thread
+           Parameters:
+           None
+           Returns:
+           None
+       """
         vid_send_thread = threading.Thread(target=self.video_sending_thread)
         aud_send_thread = threading.Thread(target=self.audio_sending_thread)
         self.thread_array.append(vid_send_thread)
