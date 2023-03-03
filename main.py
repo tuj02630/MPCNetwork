@@ -24,4 +24,5 @@ while True:
     msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
     (client_ip, client_port) = client_addr
     print('GOT connection from ', client_addr)
-    device_connections.append(DeviceConnection())
+    dc_temp = DeviceConnection(client_addr)
+    device_connections.append(dc_temp)

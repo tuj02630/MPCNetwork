@@ -11,8 +11,8 @@ loopback = '127.0.0.1'
 local_v_port = 3000
 local_a_port = 3001
 
-sv_port = 50010
-sa_port = 50020
+rv_port = 50010
+ra_port = 50020
 
 
 class DeviceConnection:
@@ -39,6 +39,11 @@ class DeviceConnection:
     sv_ready_event = threading.Event()
     sa_ready_event = threading.Event()
 
+    rv_thread: threading.Thread
+    ra_thread: threading.Thread
+    sv_thread: threading.Thread
+    sa_thread: threading.Thread
+
     def __init__(self, client_addr: tuple):
         self.client_ip, self.client_port = client_addr
         # local communication
@@ -46,19 +51,18 @@ class DeviceConnection:
         self.rv_to_sv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         self.ra_to_sa = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.ra_to_sa.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.rv_to_sv.bind((loopback, local_v_port))
-        self.ra_to_sa.bind((loopback, local_a_port))
+        # self.rv_to_sv.bind((loopback, local_v_port))
+        # self.ra_to_sa.bind((loopback, local_a_port))
         # threads
-        self.thread_array.append(threading.Thread(target=self.video_receiver_thread))
-        self.thread_array.append(threading.Thread(target=self.audio_receiver_thread))
-        # self.thread_array.append(threading.Thread(target=self.video_sender_thread))
-        self.thread_array.append
-        for thread in self.thread_array:
-            thread.start()
+
+        self.rv_thread = threading.Thread(target=self.video_receiver_thread)
+        self.ra_thread = threading.Thread(target=self.audio_receiver_thread)
+        self.rv_thread.start()
+        self.ra_thread.start()
 
     def video_receiver_thread(self):
         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-        self.rv_addr = (self.client_ip, sv_port)
+        self.rv_addr = (self.client_ip, rv_port)
         self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         self.rv_socket.sendto(b'Audio Confirmation', self.rv_addr)
@@ -78,7 +82,7 @@ class DeviceConnection:
         return
 
     def audio_receiver_thread(self):
-        self.rv_addr = (self.client_ip, sa_port)
+        self.ra_addr = (self.client_ip, ra_port)
         self.ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         self.ra_socket.sendto(b'Audio Confirmation', self.ra_addr)
@@ -88,7 +92,7 @@ class DeviceConnection:
             except TimeoutError:
                 self.ra_socket.close()
                 break
-            data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
+            # data = base64.b64decode(packet, ' /')  # the actual data if the server wants to do anything with it
             if self.sa_ready_event.is_set():
                 self.ra_to_sa.sendto(packet, (loopback, local_a_port))
         return
@@ -98,16 +102,10 @@ class DeviceConnection:
         self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         while True:
             if self.sv_addr != ('', 0):
-                packet, _ = self.v_packet_stream.read1(BUFF_SIZE)
+                packet, _ = self.ra_to_sa.recvfrom(BUFF_SIZE)
                 self.sv_socket.sendto(packet, self.sv_addr)
             else:
                 time.sleep(1)
         return
 
-    def set_rv_addr(self, sock: tuple):
-        self.rv_addr = sock
-        self.rv_ready_event.set()
-
-    def set_ra_addr(self, sock: tuple):
-        self.ra_addr = sock
-        self.ra_ready_event.set()
+    def find_receiver(self):

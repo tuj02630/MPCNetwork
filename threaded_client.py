@@ -1,5 +1,6 @@
 # This is server code to send video frames over UDP
 import base64
+import threading
 import time
 import cv2
 import imutils
@@ -10,6 +11,14 @@ import os
 BUFF_SIZE = 65536
 client_c_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_c_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+
+server_rv_addr = ("", 0)
+server_ra_addr = ("", 0)
+
 host_name = socket.gethostname()
 host_ip = '127.0.0.1'  # socket.gethostbyname(host_name)
 print(host_ip)
@@ -17,14 +26,32 @@ port = 9999
 client_addr = (host_ip, port)
 WIDTH = 300
 
-sv_port = 50010
-sa_port = 50020
+rv_port = 50010
+ra_port = 50020
 
 
-message = b'Hello'
-client_c_socket.sendto(message, client_addr)
-msg, server_t_addr = client_c_socket.recvfrom(BUFF_SIZE)
-print("Received message from server thread on :" + str(server_t_addr))
+def rv_listen_thread():
+    rv_socket.bind((host_ip, rv_port))
+    global server_rv_addr
+    _, server_rv_addr = rv_socket.recvfrom(BUFF_SIZE)
+    print("Video confirmation")
+    return
+
+
+def ra_listen_thread():
+    ra_socket.bind((host_ip, ra_port))
+    global server_ra_addr
+    _, server_ra_addr = ra_socket.recvfrom(BUFF_SIZE)
+    print("Audio confirmation")
+    return
+
+
+thread_array = [threading.Thread(target=rv_listen_thread), threading.Thread(target=ra_listen_thread)]
+for thread in thread_array:
+    thread.start()
+client_c_socket.sendto(b'Initial Connection', client_addr)
+for thread in thread_array:
+    thread.join()
 if len(sys.argv) <= 1:
     vid = cv2.VideoCapture(0)
 else:
