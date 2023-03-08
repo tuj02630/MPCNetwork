@@ -4,18 +4,13 @@ import mysql.connector
 class MPCDatabase:
     def __init__(self):
         """Reference for my sql instance. Used to perform query in database"""
-        self.connection = mysql.connector.connect(host='mpcdb.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
-                                                          user='nick',
-                                                          password='uJ8nqdEYTRdnIC339wHF',
-                                                          database='mpcdb')
-        with self.connection:
-            with self.connection.cursor() as cursor:
-                print("Connection")
-            self.connection.commit()
-        cursor.close()
+        self.connection = mysql.connector.connect(host='mpcdb.casix5st3sf8.us-east-1.rds.amazonaws.com',
+                                                  user='root',
+                                                  password='jGG4UqJNp4KGUZw63kA=',
+                                                  database="mydb")
+        print("Connected")
 
-
-    def query(self, script):
+    def query(self, script: str) -> list:
         """
             Perform query in database
 
@@ -25,24 +20,65 @@ class MPCDatabase:
             Returns:
             Lis of dictionary representing the result of the execution of sql script given
         """
+        if "select" not in script.lower():
+            raise TypeError("Script should only be Select")
+
+        try:
+            with self.connection.cursor() as cur:
+                print("[Executing]              :" + script)
+                cur.execute(script)
+                print("[Completed]              :" + script)
+                return list(cur)
+        except mysql.connector.Error as err:
+            print("Something went wrong: {}".format(err))
+
+    def insert(self, table_name, keys: list, values: list, ignore: bool):
+        """
+            Perform insert into database
+
+            Parameters:
+            script: String -> sql script to be executed
+
+            Returns:
+            None
+        """
+        script = self.gen_insert_script(table_name, keys, values, ignore)
+        try:
+            with self.connection.cursor() as cur:
+                print("[Executing]              :" + script)
+                cur.execute(script)
+                self.connection.commit()
+                print("[Completed]              :" + script)
+        except mysql.connector.Error as err:
+            print("Something went wrong: {}".format(err))
         return
 
-    def insert_customer(self, name, address, city, state, age, username, password):
+    def gen_select_script(self, table_name: str, keys: list, match_list: list = []) -> str:
+        return "Select " + ",".join(keys) + \
+               " From " + table_name + \
+               (" Where " + " and ".join(
+                   [f"{key} = '{value}'" for key, value in match_list]
+               ) if not len(match_list) == 0
+                else "")
+
+    def gen_insert_script(self, table_name: str, keys: list, values: list, ignore: bool) -> str:
+        return "Insert " + \
+               ("Ignore" if ignore else "") + \
+               " Into " + table_name + \
+               "(" + ",".join(keys) + ") Values (" + ",".join([f"'{v}'" for v in values]) + ");"
+
+    def select_payload(self, table_name: str, columns: list, match_list: list = []):
+        script = self.gen_select_script(table_name, columns, match_list)
+        result = self.query(script)
+        payload = {"column": columns, "script": script, "data": result}
+
+        return payload
+
+    def insert_customer(self, username, password, ignore: bool, match_list: list = []):
         """
             Insert a record of customer to database
 
             Parameters:
-
-            name: String -> Name of customer
-
-            address: String -> Address of customer
-
-            city: String -> City that customer lives in
-
-            state: String -> State that customer lives in
-
-            age: Int -> Age of customer
-
             username: String -> Username that customer defined
 
             password: String -> User defined password
@@ -50,9 +86,10 @@ class MPCDatabase:
             Returns:
             None
         """
+        self.insert("Customer", ["username", "password"], [username, password], ignore)
         return
 
-    def getCustomers(self):
+    def getCustomers(self) -> dict:
         """
             Execute query to get the list of customers
 
@@ -62,9 +99,10 @@ class MPCDatabase:
             Returns:
             Lis of dictionary representing list of customers
         """
-        return
+        columns = ["customer_id", "username", "password"]
+        return self.select_payload("Customer", columns)
 
-    def getCustomerById(self, id):
+    def getCustomerByName(self, name):
         """
             Execute query to get the customer information related to the given id
 
@@ -75,7 +113,8 @@ class MPCDatabase:
             Returns:
             Dict contains the customer information
         """
-        return
+        columns = ["customer_id", "username", "password"]
+        return self.select_payload("Customer", columns, [(columns[1], name)])
 
     def registerHardware(self, customer_id, is_camera=True, is_thermal=False, price=0):
         """
@@ -156,3 +195,13 @@ class MPCDatabase:
             List of video id
         """
 
+
+if __name__ == "__main__":
+    print("Started")
+
+    database = MPCDatabase()
+    data = database.getCustomers()
+    print(data)
+    database.insert_customer("Keita Nakashima", "01234567", True)
+    data = database.getCustomerByName("Test")
+    print(data)
