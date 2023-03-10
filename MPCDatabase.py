@@ -32,7 +32,7 @@ class MPCDatabase:
         except mysql.connector.Error as err:
             print("Something went wrong: {}".format(err))
 
-    def insert(self, table_name, keys: list, values: list, ignore: bool):
+    def insert(self, table_name, keys: list, values: list, ignore: bool = False):
         """
             Perform insert into database
 
@@ -50,7 +50,7 @@ class MPCDatabase:
                 self.connection.commit()
                 print("[Completed]              :" + script)
         except mysql.connector.Error as err:
-            print("Something went wrong: {}".format(err))
+            print("[Error    ]              :" + err)
         return
 
     def gen_select_script(self, table_name: str, keys: list, match_list: list = []) -> str:
@@ -70,11 +70,14 @@ class MPCDatabase:
     def select_payload(self, table_name: str, columns: list, match_list: list = []):
         script = self.gen_select_script(table_name, columns, match_list)
         result = self.query(script)
-        payload = {"column": columns, "script": script, "data": result}
+        data = []
+        for entry in result:
+            data.append(dict(zip(columns, entry)))
+        payload = {"column": columns, "script": script, "data": data}
 
         return payload
 
-    def insert_customer(self, username, password, ignore: bool, match_list: list = []):
+    def insert_customer(self, username, password, ignore: bool = False, match_list: list = []):
         """
             Insert a record of customer to database
 
@@ -116,7 +119,7 @@ class MPCDatabase:
         columns = ["customer_id", "username", "password"]
         return self.select_payload("Customer", columns, [(columns[1], name)])
 
-    def registerHardware(self, customer_id, is_camera=True, is_thermal=False, price=0):
+    def registerHardware(self, name: str, customer_name: str = None, ignore: bool = False):
         """
             Execute query to register new hardware
 
@@ -133,7 +136,20 @@ class MPCDatabase:
             Returns:
             None
         """
+        customer_data = []
+        if customer_name is not None:
+            customer_data = self.getCustomerByName(customer_name)["data"]
+
+        if len(customer_data) == 0:
+            print("[Error    ]              :" + "Customer name [" + customer_name + "] not found")
+            return
+
+        self.insert("Hardware", ["name", "customer_id"], [name, "NULL" if customer_name is None else customer_data[0]["customer_id"]], ignore)
         return
+
+    def getAllHardwares(self):
+        columns = ["hardware_id", "name", "customer_id"]
+        return self.select_payload("Hardware", columns)
 
     def addRecording(self, customer_id, hardware_id, file_name, is_video, file_size, resolution, date, time):
         """
@@ -200,8 +216,10 @@ if __name__ == "__main__":
     print("Started")
 
     database = MPCDatabase()
-    data = database.getCustomers()
+    # data = database.getCustomers()
+    # print(data)
+    # database.insert_customer("Keita Nakashima", "01234567", True)
+    data = database.getCustomerByName("Keita Nakashima")
     print(data)
-    database.insert_customer("Keita Nakashima", "01234567", True)
-    data = database.getCustomerByName("Test")
-    print(data)
+    database.registerHardware("Test2", customer_name="Keita Nakashima", ignore=True)
+    print(database.getAllHardwares())
