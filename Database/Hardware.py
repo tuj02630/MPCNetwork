@@ -1,18 +1,19 @@
 class Hardware:
     TABLE = "Hardware"
-    HARDWARE_ID = "hardware_id"
     NAME = "name"
+    HARDWARE_ID = "hardware_id"
     CUSTOMER_ID = "customer_id"
-    COLUMNS = [HARDWARE_ID, NAME, CUSTOMER_ID]
+    COLUMNS = [NAME, HARDWARE_ID, CUSTOMER_ID]
     EXPLICIT_HARDWARE_ID = f"{TABLE}.{HARDWARE_ID}"
     EXPLICIT_NAME = f"{TABLE}.{NAME}"
     EXPLICIT_CUSTOMER_ID = f"{TABLE}.{CUSTOMER_ID}"
-    EXPLICIT_COLUMNS = [EXPLICIT_HARDWARE_ID, EXPLICIT_NAME, EXPLICIT_CUSTOMER_ID]
+    EXPLICIT_COLUMNS = [EXPLICIT_NAME, EXPLICIT_HARDWARE_ID, EXPLICIT_CUSTOMER_ID]
 
     def __init__(self, name: str, hardware_id: int = None, customer_id: int = None):
         self.name = name
         self.hardware_id = hardware_id
         self.customer_id = customer_id
+        self.data_list = [self.name, self.hardware_id, self.customer_id]
 
     def __str__(self):
         return "[Hardware    ]               :NAME: {:<12} HARDWARE_ID:{:<12} CUSTOMER_ID: {:<8}".format(

@@ -13,6 +13,7 @@ class Customer:
         self.username = username
         self.password = password
         self.customer_id = customer_id
+        self.data_list = [self.username, self.password, self.customer_id]
 
     def __str__(self):
         return "[Customer    ]               :USERNAME: {:<12} PASSWORD: {:<12} CUSTOMER_ID: {:<8}"\

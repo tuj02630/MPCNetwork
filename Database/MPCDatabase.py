@@ -1,9 +1,11 @@
+import datetime
 import sys
 
 import mysql.connector
 
 from Database.Customer import Customer
 from Database.Hardware import Hardware
+from Database.Recording import Recording
 
 
 class MatchItem:
@@ -54,7 +56,7 @@ class MPCDatabase:
                 print("[Completed   ]              :" + script)
                 return list(cur)
         except mysql.connector.Error as err:
-            print("Something went wrong: {}".format(err))
+            print("[Error   ]: {}".format(err), file=sys.stderr)
 
     def insert(self, table_name, keys: list, values: list, ignore: bool = False):
         """
@@ -94,7 +96,7 @@ class MPCDatabase:
         return "Insert " + \
                ("Ignore" if ignore else "") + \
                " Into " + table_name + \
-               "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str else f"{str(v)}") for v in values]) + ");"
+               "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str and v[-2:] != "()" else f"{str(v)}") for v in values]) + ");"
 
     def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> dict:
         script = self.gen_select_script(table_name, columns, match_list, join_list)
@@ -118,7 +120,7 @@ class MPCDatabase:
             Returns:
             None
         """
-        self.insert("Customer", [Customer.USERNAME, Customer.PASSWORD], [customer.username, customer.password], ignore)
+        self.insert(Customer.TABLE, [Customer.USERNAME, Customer.PASSWORD], [customer.username, customer.password], ignore)
         return
 
     def verify_customer_id(self, id: int) -> bool:
@@ -188,9 +190,9 @@ class MPCDatabase:
             print("[Error       ]              :" + "Invalid Hardware", file=sys.stderr)
             return False
         if hardware.customer_id is not None:
-            self.insert(Hardware.TABLE, Hardware.COLUMNS, [hardware.name, hardware.customer_id], ignore)
+            self.insert(Hardware.TABLE, [Hardware.NAME, Hardware.CUSTOMER_ID], [hardware.name, hardware.customer_id], ignore)
         else:
-            self.insert(Hardware.TABLE, [hardware.NAME], [hardware.name], ignore)
+            self.insert(Hardware.TABLE, [Hardware.NAME], [hardware.name], ignore)
         return True
 
     def verify_hardware_id(self, id: int) -> bool:
@@ -209,7 +211,11 @@ class MPCDatabase:
 
         return Hardware.list_dict_to_customer_list(payload, explicit=True)
 
-    def add_recording(self, customer_id, hardware_id, file_name, is_video, file_size, resolution, date, time):
+    def get_hardware_ids_by_customer_id(self, id):
+        payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.CUSTOMER_ID, id)])
+        return [v[Hardware.HARDWARE_ID] for v in payload["data"]]
+
+    def insert_recording(self, recording: Recording, ignore: bool = False):
         """
             Add recoding record to the database
 
@@ -234,30 +240,26 @@ class MPCDatabase:
             Returns:
             None
         """
+        self.insert(Recording.TABLE,
+                    [Recording.FILE_NAME, Recording.DATE, Recording.TIMESTAMP, Recording.CUSTOMER_ID, Recording.HARDWARE_ID],
+                    [recording.file_name, recording.date, recording.timestamp, recording.customer_id, recording.hardware_id],
+                    ignore)
+        return
 
-    def saveVideo(self, customer_id, hardware_id, data, date, time):
+    def get_recordings(self) -> list[Recording]:
         """
-            Save video in the computer and add recoding record to the database
+            Execute query to get the list of customers
 
             Parameters:
-
-            customer_id: int -> Id of customer related to the recording
-
-            hardware_id: int -> Id of hardware used to take the recording
-
-            data: byte[] -> Video data
-
-            file_name: String -> Name of video file
-
-            date: date -> date that video is taken
-
-            time: time -> Time that video is taken
+            None
 
             Returns:
-            None
+            Lis of dictionary representing list of customers
         """
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS)
+        return Recording.list_dict_to_customer_list(payload["data"])
 
-    def getRecordingsByCustomerID(self, id):
+    def get_recordings_by_customer_id(self, id):
         """
             Retrieve the list of videos saved in the cloud related to the customer id
 
@@ -269,6 +271,17 @@ class MPCDatabase:
             List of video id
         """
 
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS, [MatchItem(Recording.CUSTOMER_ID, id)])["data"]
+        return Recording.list_dict_to_customer_list(payload)
+
+    def get_recordings_by_customer_name(self, customer_name):
+        payload = self.select_payload(
+            Recording.TABLE, Recording.EXPLICIT_COLUMNS,
+            match_list=[MatchItem(Customer.USERNAME, customer_name)],
+            join_list=[JoinItem(JoinItem.INNER, Customer.TABLE, Recording.EXPLICIT_CUSTOMER_ID,
+                                Customer.EXPLICIT_CUSTOMER_ID)])["data"]
+
+        return Recording.list_dict_to_customer_list(payload, explicit=True)
 
 if __name__ == "__main__":
     print("Started")
@@ -276,6 +289,7 @@ if __name__ == "__main__":
     database = MPCDatabase()
     # data = database.getCustomers()
     # print(data)
+    database.insert_customer(Customer("Keita Nakashima", "1234567"), True)
     database.insert_customer(Customer("Josh Makia", "01234567"), True)
     database.insert_customer(Customer("Ben Juria", "01234567"), True)
     data = database.get_customers()
@@ -294,3 +308,24 @@ if __name__ == "__main__":
         print(d)
     print(database.get_customer_id_by_name("Keita Nakashima"))
     print(database.verify_hardware_id(3))
+    now = datetime.datetime(2009, 5, 5)
+    recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", customer_id=201, hardware_id=131)
+    database.insert_recording(recording, ignore=True)
+    data = database.get_recordings()
+    for d in data:
+        print(d)
+
+    string = "NOW()"
+    print(string[-2:] == "()")
+    data = database.get_recordings_by_customer_id(201)
+    for d in data:
+        print(d)
+    database.insert_hardware(Hardware("Keita Device", customer_id=244))
+    database.insert_hardware(Hardware("Keita SubDevice", customer_id=244))
+    ids = database.get_hardware_ids_by_customer_id(244)
+    print(ids)
+    recording = Recording("filename8.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", customer_id=244, hardware_id=ids[0])
+    database.insert_recording(recording, True)
+    data = database.get_recordings_by_customer_id(244)
+    for d in data:
+        print(d)
