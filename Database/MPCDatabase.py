@@ -30,9 +30,9 @@ class JoinItem:
 class MPCDatabase:
     def __init__(self):
         """Reference for my sql instance. Used to perform query in database"""
-        self.connection = mysql.connector.connect(host='mpcdb.casix5st3sf8.us-east-1.rds.amazonaws.com',
-                                                  user='root',
-                                                  password='jGG4UqJNp4KGUZw63kA=',
+        self.connection = mysql.connector.connect(host='mpc.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
+                                                  user='admin',
+                                                  password='1234567890',
                                                   database="mydb")
         print("Connected")
 
@@ -57,8 +57,9 @@ class MPCDatabase:
                 return list(cur)
         except mysql.connector.Error as err:
             print("[Error   ]: {}".format(err), file=sys.stderr)
+            raise err
 
-    def insert(self, table_name, keys: list, values: list, ignore: bool = False):
+    def insert(self, table_name: str, keys: list, values: list, ignore: bool = False):
         """
             Perform insert into database
 
@@ -77,6 +78,7 @@ class MPCDatabase:
                 print("[Completed   ]              :" + script)
         except mysql.connector.Error as err:
             print("[Error       ]              :" + str(err), file=sys.stderr)
+            raise err
         return
 
     def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
