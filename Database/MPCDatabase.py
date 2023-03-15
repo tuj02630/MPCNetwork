@@ -164,7 +164,14 @@ class MPCDatabase:
             return None
         return payload[0][Customer.CUSTOMER_ID]
 
-    def insert_hardware(self, hardware: Hardware, associated_customer_name: str = None, ignore: bool = False) -> bool:
+    def delete_all_customers(self):
+
+        return
+
+    def delete_customer(self, id):
+        return
+
+    def insert_hardware(self, hardware: Hardware, associated_customer_id: int = None, ignore: bool = False) -> bool:
         """
             Execute query to register new hardware
 
@@ -181,8 +188,8 @@ class MPCDatabase:
             Returns:
             None
         """
-        if associated_customer_name is not None and hardware.customer_id is None:
-            id = self.get_customer_id_by_name(associated_customer_name)
+        if associated_customer_id is not None and hardware.customer_id is None:
+            id = associated_customer_id
             if hardware.customer_id is None or id == hardware.customer_id:
                 hardware.customer_id = id
             else:
@@ -215,6 +222,15 @@ class MPCDatabase:
 
     def get_hardware_ids_by_customer_id(self, id):
         payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.CUSTOMER_ID, id)])
+        return [v[Hardware.HARDWARE_ID] for v in payload["data"]]
+
+    def get_hardware_ids_by_customer_name(self, customer_name):
+        payload = self.select_payload(
+            Hardware.TABLE, [Hardware.HARDWARE_ID],
+            match_list=[MatchItem(Customer.USERNAME, customer_name)],
+            join_list=[JoinItem(JoinItem.INNER, Customer.TABLE, Hardware.EXPLICIT_CUSTOMER_ID,
+                                Customer.EXPLICIT_CUSTOMER_ID)])
+
         return [v[Hardware.HARDWARE_ID] for v in payload["data"]]
 
     def insert_recording(self, recording: Recording, ignore: bool = False):
@@ -285,6 +301,8 @@ class MPCDatabase:
 
         return Recording.list_dict_to_customer_list(payload, explicit=True)
 
+
+
 if __name__ == "__main__":
     print("Started")
 
@@ -298,18 +316,9 @@ if __name__ == "__main__":
     for d in data:
         print(d)
     print(database.get_customer_id_by_name("Ben Juria"))
-    database.insert_hardware(Hardware("Rasberry Pi", database.get_customer_id_by_name("Keita Nakashima")), ignore=True)
+    database.insert_hardware(Hardware("Rasberry Pi Keita", database.get_customer_id_by_name("Keita Nakashima")), ignore=True)
     hardware = Hardware("Rasperry Pi Extra")
-    database.insert_hardware(hardware, ignore=True)
-    data = database.get_hardwares()
-    for d in data:
-        print(d)
-    print(database.verify_customer_id(26))
-    data = database.get_hardwares_by_customer_name("Keita Nakashima")
-    for d in data:
-        print(d)
-    print(database.get_customer_id_by_name("Keita Nakashima"))
-    print(database.verify_hardware_id(3))
+
     now = datetime.datetime(2009, 5, 5)
     recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", customer_id=201, hardware_id=131)
     database.insert_recording(recording, ignore=True)
@@ -317,17 +326,8 @@ if __name__ == "__main__":
     for d in data:
         print(d)
 
-    string = "NOW()"
-    print(string[-2:] == "()")
-    data = database.get_recordings_by_customer_id(201)
+    data = database.get_hardwares()
     for d in data:
         print(d)
-    database.insert_hardware(Hardware("Keita Device", customer_id=244))
-    database.insert_hardware(Hardware("Keita SubDevice", customer_id=244))
-    ids = database.get_hardware_ids_by_customer_id(244)
-    print(ids)
-    recording = Recording("filename8.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", customer_id=244, hardware_id=ids[0])
-    database.insert_recording(recording, True)
-    data = database.get_recordings_by_customer_id(244)
-    for d in data:
-        print(d)
+    id = database.get_customer_id_by_name("Keita Nakashima")
+    database.insert_hardware(Hardware("Rasberry Pi Keita1"), associated_customer_id=id, ignore=True)
