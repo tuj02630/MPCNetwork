@@ -302,7 +302,6 @@ class MPCDatabase:
         return Recording.list_dict_to_customer_list(payload, explicit=True)
 
 
-
 if __name__ == "__main__":
     print("Started")
 

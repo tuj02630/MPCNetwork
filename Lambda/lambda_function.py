@@ -1,26 +1,21 @@
-from flask import Flask
-import awsgi
-import base64
-import boto3
-
-app = Flask(__name__)
-s3 = boto3.client('s3')
+import json
+import os
+from flask import Flask, request, jsonify
 
 
 def lambda_handler(event, context):
-    # response = s3.get_object(
-    #     Bucket='mpc-capstone',
-    #     Key='image.png',
-    # )
-    # image = response['Body'].read()
-    # return {
-    #     'headers': {"Content-Type": "image/png"},
-    #     'statusCode': 200,
-    #     'body': base64.b64encode(image),
-    #     'isBase64Encoded': True
-    # }
-    return awsgi.response(app, event, context)
+    print(event)
+    print(context)
+    print("11")
+    data = "Event\n" + str(event) + "\nContext\n" + str(context)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(data)
+    }
+
+# app = Flask(__name__)
+# @app.route('/', methods=['GET'])
+# def home():
+#     return jsonify({'message': 'Hello, World!'})
