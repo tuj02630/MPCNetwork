@@ -10,6 +10,7 @@ import pyaudio
 
 class SenderClient:
     """Reference for Sender Client, the network script in the camera. Used to send video and audio to the server"""
+
     def __init__(self):
         self.thread_array = []
         """Thread list to store video and audio thread"""
@@ -126,7 +127,7 @@ class SenderClient:
         vid_send_thread = threading.Thread(target=self.video_sending_thread)
         aud_send_thread = threading.Thread(target=self.audio_sending_thread)
         self.thread_array.append(vid_send_thread)
-        self.thread_array.append(aud_send_thread)
+        # self.thread_array.append(aud_send_thread)
         for thread in self.thread_array:
             thread.start()
 

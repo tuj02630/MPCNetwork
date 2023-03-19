@@ -1,87 +1,92 @@
-import base64
-import io
 import socket
 import threading
-import time
-import cv2
 import numpy
 
 BUFF_SIZE = 65536
 dtype = numpy.uint8
 
-local_ip = '127.0.0.1'
-local_v_port = 3000
-local_a_port = 3001
+HOST = '172.31.12.186'
+v_port = 9998
+a_port = 9999
 
+DEBUG = False
 
-class DeviceConnection(threading.Thread):
+class DeviceConnection:
     thread_array = []
-    rv_socket: socket.socket
-    ra_socket: socket.socket
+    device_id: str = ""
+    s_addr: tuple = ('', 0)
+    curr_port: int  # video port, audio port is + 1
+    thread_array = []
+    socket_array:tuple = []
+    receiver_array: socket.socket = []  #
     sv_socket: socket.socket
     sa_socket: socket.socket
-
-    rv_to_sv: socket.socket
-    ra_to_sa: socket.socket
-
-    rv_addr: tuple = ('', 0)
-    ra_addr: tuple = ('', 0)
     sv_addr: tuple = ('', 0)
     sa_addr: tuple = ('', 0)
 
+    vid_thread: threading.Thread
+    aud_thread: threading.Thread
 
-
-    def run(self):
-        # local communication
-        self.rv_to_sv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.rv_to_sv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.ra_to_sa = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.ra_to_sa.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.rv_to_sv.bind((local_ip, local_v_port))
-        self.ra_to_sa.bind((local_ip, local_a_port))
-        # threads
-        self.thread_array.append(threading.Thread(target=self.video_receiver_thread))
-        self.thread_array.append(threading.Thread(target=self.audio_receiver_thread))
-        self.thread_array.append(threading.Thread(target=self.video_sender_thread))
-        self.thread_array.append
-        for thread in self.thread_array:
-            thread.start()
-
-    def video_receiver_thread(self):
-        fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-        self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        # self.rv_socket.sendto(b'Audio Confirmation', REPLACE_ME_WITH_ADDR)
-        while True:
-            packet, _ = self.rv_socket.recvfrom(BUFF_SIZE)
-            self.rv_to_sv.sendto(packet, (local_ip, local_v_port))
-            if cnt == frames_to_count:
-                # noinspection PyBroadException
-                try:
-                    fps = round(frames_to_count / (time.time() - st))
-                    st = time.time()
-                    cnt = 0
-                except:
-                    pass
-            cnt += 1
-
-        return
-
-    def audio_receiver_thread(self):
-        self.rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        self.rv_socket.sendto(b'Audio Confirmation', sock)
-        return
-
-    def video_sender_thread(self):
-        self.sv_socket = socket.socket(socket.AF_INET, socket)
+    def video_sending_handler(self):
+        self.sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+        # self.sv_socket.bind((local_ip, self.curr_port))
+
+        # start connection
+        self.sv_socket.bind(((HOST, self.curr_port)))
         while True:
-            if self.sv_addr != ('', 0):
-                packet, _ = self.v_packet_stream.read1(BUFF_SIZE)
-                self.sv_socket.sendto(packet, self.sv_addr)
-            else:
-                time.sleep(1)
+            packet, _ = self.sv_socket.recvfrom(BUFF_SIZE)
+            if DEBUG:
+                print("\nReceiving Video: " + str(packet))
+            # send packet to all rv ips here
+            i = 0
+            for sock in self.receiver_array:
+                sock.sendto(packet, self.socket_array[i])
+                i+=1
         return
 
-    def set_sv_addr(self, sock:tuple):
+    def audio_sending_handler(self):
+        s_ip, s_port = self.s_addr
+        self.sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+        # start connection
+        self.sa_socket.bind((HOST, self.curr_port + 1))
+
+        while True:
+            packet, _ = self.sa_socket.recvfrom(BUFF_SIZE)
+            # send packet to all ra ips here
+            i = 0
+            for sock in self.receiver_array:
+                sock.sendto(packet, self.socket_array[i])
+                i+=1
+        return
+
+    def add_receiver(self, ip:str, port:int):
+        print("\tOpening new socket with port: "+str(port))
+        r_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        r_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+        r_socket.bind((HOST, port))
+        threading.Thread(target=self.start_receiver_socket, args=r_socket).start()
+        self.socket_array.append((ip, port))
+        self.receiver_array.append(r_socket)
+
+    def start_receiver_socket(self, r_socket:socket.socket):
+        r_socket.recv(BUFF_SIZE)
+        return
+
+    def set_sender_socket(self, ss: tuple):
+        self.s_addr
+
+    def get_device_id(self):
+        return self.device_id
+
+    def __init__(self, s_addr: tuple, device_id: str, curr_port: int):
+        self.s_addr = s_addr
+        self.device_id = device_id
+        self.curr_port = curr_port
+        print(
+            "\t\tCreated new DeviceConnection with Device ID: " + self.device_id + " and address: " + str(self.s_addr))
+        self.vid_thread = threading.Thread(target=self.video_sending_handler)
+        self.aud_thread = threading.Thread(target=self.audio_sending_handler)
+        self.vid_thread.start()
+        self.aud_thread.start()
