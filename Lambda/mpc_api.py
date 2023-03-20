@@ -21,9 +21,25 @@ api = MPC_API()
 
 @api.handle("Message")
 def function(event):
+    print("Message")
+    return event
+
+
+@api.handle("Post")
+def function(event):
+    print("Post")
+    return event
+
+
+@api.handle("GET")
+def function(event):
+    print("GET")
     return event
 
 
 if __name__ == "__main__":
-    print(api.handlers["Message"]())
+    api.handlers["Message"](None)
+    api.handlers["Post"](None)
+    api.handlers["Message"](None)
+
 

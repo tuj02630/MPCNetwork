@@ -1,6 +1,4 @@
 import json
-import os
-from flask import Flask, request, jsonify
 
 
 def lambda_handler(event, context):
@@ -11,7 +9,7 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
+        'headers': {'Content-Type': 'application/json', "x-api-key": "3hz1jabJZ08Ee9ZsTzGEc9NlkLM0U5uF7inDPeoW"},
         'body': json.dumps(data)
     }
 
