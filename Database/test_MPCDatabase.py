@@ -1,6 +1,6 @@
 import mysql.connector
 
-from Database.Customer import Customer
+from Database.Account import Customer
 from Database.MPCDatabase import MPCDatabase
 
 database = MPCDatabase()

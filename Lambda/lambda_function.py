@@ -6,6 +6,7 @@ import boto3
 api = MPC_API()
 s3 = boto3.client('s3')
 
+
 def lambda_handler(event, context):
     print(event)
     print(context)
@@ -68,6 +69,7 @@ def video_request(para):
 
 @api.handle("Account")
 def account_request(para):
+
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},

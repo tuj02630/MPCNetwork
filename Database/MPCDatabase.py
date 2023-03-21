@@ -3,7 +3,7 @@ import sys
 
 import mysql.connector
 
-from Database.Customer import Customer
+from Database.Account import Account
 from Database.Hardware import Hardware
 from Database.Recording import Recording
 
@@ -110,74 +110,74 @@ class MPCDatabase:
 
         return payload
 
-    def insert_customer(self, customer: Customer, ignore: bool = False):
+    def insert_account(self, account: Account, ignore: bool = False):
         """
-            Insert a record of customer to database
+            Insert a record of account to database
 
             Parameters:
-            username: String -> Username that customer defined
+            username: String -> Username that account defined
 
             password: String -> User defined password
 
             Returns:
             None
         """
-        self.insert(Customer.TABLE, [Customer.USERNAME, Customer.PASSWORD], [customer.username, customer.password], ignore)
+        self.insert(Account.TABLE, [Account.USERNAME, Account.PASSWORD], [account.username, account.password], ignore)
         return
 
-    def verify_customer_id(self, id: int) -> bool:
-        customers = self.select_payload(Customer.TABLE, Customer.COLUMNS, match_list=[MatchItem(Customer.CUSTOMER_ID, id)])
-        return len(customers["data"]) == 1
+    def verify_account_id(self, id: int) -> bool:
+        accounts = self.select_payload(Account.TABLE, Account.COLUMNS, match_list=[MatchItem(Account.ACCOUNT_ID, id)])
+        return len(accounts["data"]) == 1
 
-    def get_customers(self) -> list[Customer]:
+    def get_accounts(self) -> list[Account]:
         """
-            Execute query to get the list of customers
+            Execute query to get the list of accounts
 
             Parameters:
             None
 
             Returns:
-            Lis of dictionary representing list of customers
+            Lis of dictionary representing list of accounts
         """
-        payload = self.select_payload(Customer.TABLE, Customer.COLUMNS)
-        return Customer.list_dict_to_customer_list(payload["data"])
+        payload = self.select_payload(Account.TABLE, Account.COLUMNS)
+        return Account.list_dict_to_account_list(payload["data"])
 
-    def get_customer_by_name(self, name: str) -> Customer:
+    def get_account_by_name(self, name: str) -> Account:
         """
-            Execute query to get the customer information related to the given id
+            Execute query to get the account information related to the given id
 
             Parameters:
 
-            id: int -> Id of customer
+            id: int -> Id of account
 
             Returns:
-            Dict contains the customer information
+            Dict contains the account information
         """
-        data = self.select_payload(Customer.TABLE, Customer.COLUMNS, match_list=[MatchItem(Customer.USERNAME, name)])["data"]
+        data = self.select_payload(Account.TABLE, Account.COLUMNS, match_list=[MatchItem(Account.USERNAME, name)])["data"]
         if len(data) != 1:
             return None
-        return Customer.dict_to_customer(data[0])
+        return Account.dict_to_account(data[0])
 
-    def get_customer_id_by_name(self, name: str) -> int:
-        payload = self.select_payload(Customer.TABLE, [Customer.CUSTOMER_ID], [MatchItem(Customer.USERNAME, name)])["data"]
+    def get_account_id_by_name(self, name: str) -> int:
+        payload = self.select_payload(Account.TABLE, [Account.ACCOUNT_ID], [MatchItem(Account.USERNAME, name)])["data"]
         if len(payload) == 0:
             return None
-        return payload[0][Customer.CUSTOMER_ID]
+        return payload[0][Account.ACCOUNT_ID]
 
-    def delete_all_customers(self):
+    def delete_all_accounts(self):
 
         return
 
-    def delete_customer(self, id):
+    def delete_account(self, id):
         return
 
-    def insert_hardware(self, hardware: Hardware, associated_customer_id: int = None, ignore: bool = False) -> bool:
+    def insert_hardware(self, hardware: Hardware, associated_account_id: int = None, ignore: bool = False) -> bool:
         """
             Execute query to register new hardware
 
             Parameters:
 
-            customer_id: int -> Id of customer related to the hardware
+            account_id: int -> Id of account related to the hardware
 
             is_camera: bool -> True for if the device is camera
 
@@ -188,18 +188,18 @@ class MPCDatabase:
             Returns:
             None
         """
-        if associated_customer_id is not None and hardware.customer_id is None:
-            id = associated_customer_id
-            if hardware.customer_id is None or id == hardware.customer_id:
-                hardware.customer_id = id
+        if associated_account_id is not None and hardware.account_id is None:
+            id = associated_account_id
+            if hardware.account_id is None or id == hardware.account_id:
+                hardware.account_id = id
             else:
-                print("[Error       ]              :Conflicting customer information", file=sys.stderr)
+                print("[Error       ]              :Conflicting account information", file=sys.stderr)
                 return False
-        if hardware.customer_id is not None and not self.verify_customer_id(hardware.customer_id):
+        if hardware.account_id is not None and not self.verify_account_id(hardware.account_id):
             print("[Error       ]              :" + "Invalid Hardware", file=sys.stderr)
             return False
-        if hardware.customer_id is not None:
-            self.insert(Hardware.TABLE, [Hardware.NAME, Hardware.CUSTOMER_ID], [hardware.name, hardware.customer_id], ignore)
+        if hardware.account_id is not None:
+            self.insert(Hardware.TABLE, [Hardware.NAME, Hardware.ACCOUNT_ID], [hardware.name, hardware.account_id], ignore)
         else:
             self.insert(Hardware.TABLE, [Hardware.NAME], [hardware.name], ignore)
         return True
@@ -210,26 +210,26 @@ class MPCDatabase:
 
     def get_hardwares(self):
         payload = self.select_payload(Hardware.TABLE, Hardware.COLUMNS)
-        return Hardware.list_dict_to_customer_list(payload["data"])
+        return Hardware.list_dict_to_hardware_list(payload["data"])
 
-    def get_hardwares_by_customer_name(self, customer_name: str):
+    def get_hardwares_by_account_name(self, account_name: str):
         payload = self.select_payload(
             Hardware.TABLE, Hardware.EXPLICIT_COLUMNS,
-            match_list=[MatchItem(Customer.USERNAME, customer_name)],
-            join_list=[JoinItem(JoinItem.INNER, Customer.TABLE, Hardware.EXPLICIT_CUSTOMER_ID, Customer.EXPLICIT_CUSTOMER_ID)])["data"]
+            match_list=[MatchItem(Account.USERNAME, account_name)],
+            join_list=[JoinItem(JoinItem.INNER, Account.TABLE, Hardware.EXPLICIT_ACCOUNT_ID, Account.EXPLICIT_ACCOUNT_ID)])["data"]
 
-        return Hardware.list_dict_to_customer_list(payload, explicit=True)
+        return Hardware.list_dict_to_hardware_list(payload, explicit=True)
 
-    def get_hardware_ids_by_customer_id(self, id):
-        payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.CUSTOMER_ID, id)])
+    def get_hardware_ids_by_account_id(self, id):
+        payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.ACCOUNT_ID, id)])
         return [v[Hardware.HARDWARE_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_customer_name(self, customer_name):
+    def get_hardware_ids_by_account_name(self, account_name):
         payload = self.select_payload(
             Hardware.TABLE, [Hardware.HARDWARE_ID],
-            match_list=[MatchItem(Customer.USERNAME, customer_name)],
-            join_list=[JoinItem(JoinItem.INNER, Customer.TABLE, Hardware.EXPLICIT_CUSTOMER_ID,
-                                Customer.EXPLICIT_CUSTOMER_ID)])
+            match_list=[MatchItem(Account.USERNAME, account_name)],
+            join_list=[JoinItem(JoinItem.INNER, Account.TABLE, Hardware.EXPLICIT_ACCOUNT_ID,
+                                Account.EXPLICIT_ACCOUNT_ID)])
 
         return [v[Hardware.HARDWARE_ID] for v in payload["data"]]
 
@@ -239,7 +239,7 @@ class MPCDatabase:
 
             Parameters:
 
-            customer_id: int -> Id of customer related to the recording
+            account_id: int -> Id of account related to the recording
 
             hardware_id: int -> Id of hardware used to take the recording
 
@@ -259,67 +259,65 @@ class MPCDatabase:
             None
         """
         self.insert(Recording.TABLE,
-                    [Recording.FILE_NAME, Recording.DATE, Recording.TIMESTAMP, Recording.CUSTOMER_ID, Recording.HARDWARE_ID],
-                    [recording.file_name, recording.date, recording.timestamp, recording.customer_id, recording.hardware_id],
+                    [Recording.FILE_NAME, Recording.DATE, Recording.TIMESTAMP, Recording.ACCOUNT_ID, Recording.HARDWARE_ID],
+                    [recording.file_name, recording.date, recording.timestamp, recording.ACCOUNT_ID, recording.hardware_id],
                     ignore)
         return
 
     def get_recordings(self) -> list[Recording]:
         """
-            Execute query to get the list of customers
+            Execute query to get the list of accounts
 
             Parameters:
             None
 
             Returns:
-            Lis of dictionary representing list of customers
+            Lis of dictionary representing list of accounts
         """
         payload = self.select_payload(Recording.TABLE, Recording.COLUMNS)
-        return Recording.list_dict_to_customer_list(payload["data"])
+        return Recording.list_dict_to_recording_list(payload["data"])
 
-    def get_recordings_by_customer_id(self, id):
+    def get_recordings_by_account_id(self, id):
         """
-            Retrieve the list of videos saved in the cloud related to the customer id
+            Retrieve the list of videos saved in the cloud related to the account id
 
             Parameters:
 
-            customer_id: int -> Id of customer related to the recording
+            account_id: int -> Id of account related to the recording
 
             Returns:
             List of video id
         """
 
-        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS, [MatchItem(Recording.CUSTOMER_ID, id)])["data"]
-        return Recording.list_dict_to_customer_list(payload)
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS, [MatchItem(Recording.ACCOUNT_ID, id)])["data"]
+        return Recording.list_dict_to_recording_list(payload)
 
-    def get_recordings_by_customer_name(self, customer_name):
+    def get_recordings_by_account_name(self, account_name):
         payload = self.select_payload(
             Recording.TABLE, Recording.EXPLICIT_COLUMNS,
-            match_list=[MatchItem(Customer.USERNAME, customer_name)],
-            join_list=[JoinItem(JoinItem.INNER, Customer.TABLE, Recording.EXPLICIT_CUSTOMER_ID,
-                                Customer.EXPLICIT_CUSTOMER_ID)])["data"]
+            match_list=[MatchItem(Account.USERNAME, account_name)],
+            join_list=[JoinItem(JoinItem.INNER, Account.TABLE, Recording.EXPLICIT_ACCOUNT_ID,
+                                Account.EXPLICIT_ACCOUNT_ID)])["data"]
 
-        return Recording.list_dict_to_customer_list(payload, explicit=True)
+        return Recording.list_dict_to_recording_list(payload, explicit=True)
 
 
 if __name__ == "__main__":
     print("Started")
 
     database = MPCDatabase()
-    # data = database.getCustomers()
-    # print(data)
-    database.insert_customer(Customer("Keita Nakashima", "1234567"), True)
-    database.insert_customer(Customer("Josh Makia", "01234567"), True)
-    database.insert_customer(Customer("Ben Juria", "01234567"), True)
-    data = database.get_customers()
+    database.insert_account(Account("Keita Nakashima", "1234567"), True)
+    database.insert_account(Account("Josh Makia", "01234567"), True)
+    database.insert_account(Account("Ben Juria", "01234567"), True)
+    data = database.get_accounts()
     for d in data:
         print(d)
-    print(database.get_customer_id_by_name("Ben Juria"))
-    database.insert_hardware(Hardware("Rasberry Pi Keita", database.get_customer_id_by_name("Keita Nakashima")), ignore=True)
+    print(database.get_account_id_by_name("Ben Juria"))
+    database.insert_hardware(Hardware("Rasberry Pi Keita", database.get_account_id_by_name("Keita Nakashima")), ignore=True)
     hardware = Hardware("Rasperry Pi Extra")
 
     now = datetime.datetime(2009, 5, 5)
-    recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", customer_id=201, hardware_id=131)
+    recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", account_id=201, hardware_id=131)
     database.insert_recording(recording, ignore=True)
     data = database.get_recordings()
     for d in data:
@@ -328,5 +326,5 @@ if __name__ == "__main__":
     data = database.get_hardwares()
     for d in data:
         print(d)
-    id = database.get_customer_id_by_name("Keita Nakashima")
-    database.insert_hardware(Hardware("Rasberry Pi Keita1"), associated_customer_id=id, ignore=True)
+    id = database.get_account_id_by_name("Keita Nakashima")
+    database.insert_hardware(Hardware("Rasberry Pi Keita1"), associated_account_id=id, ignore=True)
