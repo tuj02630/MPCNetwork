@@ -1,11 +1,12 @@
 import base64
 
+from Database.MPCDatabase import MPCDatabase
 from mpc_api import MPC_API
 import boto3
 
 api = MPC_API()
 s3 = boto3.client('s3')
-
+database = MPCDatabase()
 
 def lambda_handler(event, context):
     print(event)
@@ -69,12 +70,20 @@ def video_request(para):
 
 @api.handle("Account")
 def account_request(para):
+    if "account_id" not in para:
+        accounts = database.get_accounts()
 
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': "Account"
-    }
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': accounts
+        }
+    else:
+        return  {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': "Accounts"
+        }
 
 
 @api.handle("Recording")
