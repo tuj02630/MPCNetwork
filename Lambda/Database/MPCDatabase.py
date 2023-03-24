@@ -3,9 +3,20 @@ import sys
 
 import mysql.connector
 
-from Database.Account import Account
-from Database.Hardware import Hardware
-from Database.Recording import Recording
+try:
+    from Database.Account import Account
+except:
+    from Lambda.Database.Account import Account
+try:
+    from Database.Hardware import Hardware
+except:
+    from Lambda.Database.Hardware import Hardware
+try:
+    from Database.Recording import Recording
+except:
+    from Lambda.Database.Recording import Recording
+
+
 
 
 class MatchItem:
@@ -158,6 +169,12 @@ class MPCDatabase:
             return None
         return Account.dict_to_account(data[0])
 
+    def get_account_by_id(self, id: int) -> int:
+        data = self.select_payload(Account.TABLE, Account.COLUMNS, match_list=[MatchItem(Account.ACCOUNT_ID, id)])["data"]
+        if len(data) != 1:
+            return None
+        return Account.dict_to_account(data[0])
+
     def get_account_id_by_name(self, name: str) -> int:
         payload = self.select_payload(Account.TABLE, [Account.ACCOUNT_ID], [MatchItem(Account.USERNAME, name)])["data"]
         if len(payload) == 0:
@@ -212,6 +229,17 @@ class MPCDatabase:
         payload = self.select_payload(Hardware.TABLE, Hardware.COLUMNS)
         return Hardware.list_dict_to_hardware_list(payload["data"])
 
+    def get_hardware_by_id(self, id: int) -> int:
+        data = self.select_payload(Hardware.TABLE, Hardware.COLUMNS, match_list=[MatchItem(Hardware.HARDWARE_ID, id)])["data"]
+        if len(data) != 1:
+            return None
+        return Hardware.dict_to_hardware(data[0])
+
+    def get_hardwares_by_account_id(self, id: int) -> int:
+        payload = self.select_payload(Hardware.TABLE, Hardware.COLUMNS,
+                                      match_list=[MatchItem(Hardware.ACCOUNT_ID, id)])["data"]
+        return Hardware.list_dict_to_hardware_list(payload)
+
     def get_hardwares_by_account_name(self, account_name: str):
         payload = self.select_payload(
             Hardware.TABLE, Hardware.EXPLICIT_COLUMNS,
@@ -219,6 +247,12 @@ class MPCDatabase:
             join_list=[JoinItem(JoinItem.INNER, Account.TABLE, Hardware.EXPLICIT_ACCOUNT_ID, Account.EXPLICIT_ACCOUNT_ID)])["data"]
 
         return Hardware.list_dict_to_hardware_list(payload, explicit=True)
+
+    def get_hardware_id_by_name(self, name: str) -> int:
+        payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.NAME, name)])["data"]
+        if len(payload) == 0:
+            return None
+        return payload[0][Hardware.HARDWARE_ID]
 
     def get_hardware_ids_by_account_id(self, id):
         payload = self.select_payload(Hardware.TABLE, [Hardware.HARDWARE_ID], [MatchItem(Hardware.ACCOUNT_ID, id)])
@@ -260,7 +294,7 @@ class MPCDatabase:
         """
         self.insert(Recording.TABLE,
                     [Recording.FILE_NAME, Recording.DATE, Recording.TIMESTAMP, Recording.ACCOUNT_ID, Recording.HARDWARE_ID],
-                    [recording.file_name, recording.date, recording.timestamp, recording.ACCOUNT_ID, recording.hardware_id],
+                    [recording.file_name, recording.date, recording.timestamp, recording.account_id, recording.hardware_id],
                     ignore)
         return
 
@@ -277,6 +311,12 @@ class MPCDatabase:
         payload = self.select_payload(Recording.TABLE, Recording.COLUMNS)
         return Recording.list_dict_to_recording_list(payload["data"])
 
+    def get_recording_by_id(self, id):
+        payload = self.select_payload(
+            Recording.TABLE, Recording.COLUMNS, match_list=[MatchItem(Recording.RECORDING_ID, id)])["data"]
+
+        return Recording.dict_to_recording(data[0])
+
     def get_recordings_by_account_id(self, id):
         """
             Retrieve the list of videos saved in the cloud related to the account id
@@ -289,7 +329,22 @@ class MPCDatabase:
             List of video id
         """
 
-        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS, [MatchItem(Recording.ACCOUNT_ID, id)])["data"]
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS,
+                                      match_list=[MatchItem(Recording.ACCOUNT_ID, id)])["data"]
+        return Recording.list_dict_to_recording_list(payload)
+
+    def get_recordings_by_hardware_id(self, id):
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS,
+                                      match_list=[MatchItem(Recording.HARDWARE_ID, id)])["data"]
+
+        return Recording.list_dict_to_recording_list(payload)
+
+    def get_recordings_by_account_id_hardware_id(self, account_id, hardware_id):
+        payload = self.select_payload(Recording.TABLE, Recording.COLUMNS,
+                                      match_list=[
+                                          MatchItem(Recording.ACCOUNT_ID, account_id),
+                                          MatchItem(Recording.HARDWARE_ID, hardware_id)])["data"]
+
         return Recording.list_dict_to_recording_list(payload)
 
     def get_recordings_by_account_name(self, account_name):
@@ -317,7 +372,9 @@ if __name__ == "__main__":
     hardware = Hardware("Rasperry Pi Extra")
 
     now = datetime.datetime(2009, 5, 5)
-    recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", account_id=201, hardware_id=131)
+    a_id = database.get_account_id_by_name("Keita Nakashima")
+    h_id = database.get_hardware_ids_by_account_name("Keita Nakashima")[0]
+    recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", account_id=a_id, hardware_id=h_id)
     database.insert_recording(recording, ignore=True)
     data = database.get_recordings()
     for d in data:

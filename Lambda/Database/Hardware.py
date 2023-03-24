@@ -11,8 +11,8 @@ class Hardware:
 
     def __init__(self, name: str, hardware_id: int = None, account_id: int = None):
         self.name = name
-        self.hardware_id = hardware_id
-        self.account_id = account_id
+        self.hardware_id = int(hardware_id) if hardware_id is not None else None
+        self.account_id = int(account_id) if account_id is not None else None
         self.data_list = [self.name, self.hardware_id, self.account_id]
 
     def __str__(self):

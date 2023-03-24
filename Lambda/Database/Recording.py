@@ -4,7 +4,7 @@ class Recording:
     DATE = "date"
     TIMESTAMP = "timestamp"
     RECORDING_ID = "recording_id"
-    ACCOUNT_ID = "ACCOUNT_ID"
+    ACCOUNT_ID = "account_id"
     HARDWARE_ID = "hardware_id"
     COLUMNS = [FILE_NAME, DATE, TIMESTAMP, RECORDING_ID, ACCOUNT_ID, HARDWARE_ID]
     EXPLICIT_FILE_NAME = f"{TABLE}.{FILE_NAME}"
@@ -23,15 +23,15 @@ class Recording:
         self.file_name = file_name
         self.date = date
         self.timestamp = timestamp
-        self.recording_id = recording_id
-        self.ACCOUNT_ID = account_id
-        self.hardware_id = hardware_id
-        self.data_list = [self.file_name, self.date, self.timestamp, self.recording_id, self.ACCOUNT_ID, self.hardware_id]
+        self.recording_id = int(recording_id) if recording_id is not None else None
+        self.account_id = int(account_id) if account_id is not None else None
+        self.hardware_id = int(hardware_id) if hardware_id is not None else None
+        self.data_list = [self.file_name, self.date, self.timestamp, self.recording_id, self.account_id, self.hardware_id]
 
     def __str__(self):
         return "[Recording    ]               :FILE_NAME: {:<12} DATE: {:<12} TIMESTAMP {:<12} RECORDING_ID: {:<8} " \
                "ACCOUNT_ID: {:<8} HARDWARE_ID: {:<8}".format(self.file_name, self.date, self.timestamp,
-                                                              self.recording_id, self.ACCOUNT_ID, self.hardware_id)
+                                                              self.recording_id, self.account_id, self.hardware_id)
 
     @staticmethod
     def dict_to_recording(payload: dict, explicit=False) -> "Recording":

@@ -3,7 +3,7 @@ class MPC_API:
         self.handlers = {}
 
     def get_key(self, action):
-        return action
+        return action.lower()
 
     def handle(self, action):
         def decorator(func):

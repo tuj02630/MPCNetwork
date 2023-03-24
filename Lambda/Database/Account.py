@@ -12,7 +12,7 @@ class Account:
     def __init__(self, username: str, password: str, account_id: int = None):
         self.username = username
         self.password = password
-        self.Account_id = account_id
+        self.Account_id = int(account_id) if account_id is not None else None
         self.data_list = [self.username, self.password, self.Account_id]
 
     def __str__(self):
