@@ -2,9 +2,9 @@ import base64
 import json
 
 from Database.MPCDatabase import MPCDatabase
-from Database.Account import Account
-from Database.Hardware import Hardware
-from Database.Recording import Recording
+from Database.Data.Recording import Recording
+from Database.Data.Account import Account
+from Database.Data.Hardware import Hardware
 from mpc_api import MPC_API
 import boto3
 
@@ -107,12 +107,12 @@ def image_request(para):
 @api.handle("Account")
 def account_request(para):
     if "account_id" not in para:
-        accounts = database.get_accounts()
+        accounts = database.get_all(Account)
         dict_list = [account.__dict__ for account in accounts]
 
         body = json.dumps(dict_list)
     else:
-        account = database.get_account_by_id(para["account_id"])
+        account = database.get_by_id(Account, para["account_id"])
         body = json.dumps(account.__dict__ )
     return  {
             'statusCode': 200,
@@ -124,20 +124,20 @@ def account_request(para):
 @api.handle("Recording")
 def recording_request(para):
     if "recording_id" in para:
-        recording = database.get_recording_by_id(para["recording_id"])
+        recording = database.get_by_id(Recording, para["recording_id"])
         body = json.dumps(recording.__dict__)
     else:
         if "hardware_id" in para and "account_id" in para:
-            recordings = database.get_recordings_by_account_id_hardware_id(para["account_id"], para["hardware_id"])
+            recordings = database.get_all_by_account_id_hardware_id(Recording, para["account_id"], para["hardware_id"])
 
         elif "account_id" in para:
-            recordings = database.get_recordings_by_account_id(para["account_id"])
+            recordings = database.get_all_by_account_id(Recording, para["account_id"])
 
         elif "hardware_id" in para:
-            recordings = database.get_recordings_by_hardware_id(para["hardware_id"])
+            recordings = database.get_all_by_hardware_id(Recording, para["hardware_id"])
 
         else:
-            recordings = database.get_recordings()
+            recordings = database.get_all(Recording)
         body = json.dumps([recording.__dict__ for recording in recordings])
 
     return {
@@ -148,16 +148,16 @@ def recording_request(para):
 
 
 @api.handle("Hardware")
-def recording_request(para):
+def hardware_request(para):
     if "hardware_id" in para:
-        hardware = database.get_hardware_by_id(para["hardware_id"])
+        hardware = database.get_by_id(Hardware, para["hardware_id"])
         body = json.dumps(hardware.__dict__)
     else:
         if "account_id" in para:
-            hardwares = database.get_hardwares_by_account_id(para["account_id"])
+            hardwares = database.get_all_by_account_id(Hardware, para["account_id"])
 
         else:
-            hardwares = database.get_recordings()
+            hardwares = database.get_all(Hardware)
         body = json.dumps([hardware.__dict__ for hardware in hardwares])
 
     return {
@@ -171,5 +171,6 @@ if __name__ == "__main__":
     event = {
         "queryStringParameters": {"event_type": "Hardware", "account_id": 312}
     }
+
     print(lambda_handler(event , None))
 

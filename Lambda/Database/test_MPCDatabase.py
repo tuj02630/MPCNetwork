@@ -1,6 +1,6 @@
 import mysql.connector
 
-from Lambda.Database.MPCDatabase import MPCDatabase
+from Database.MPCDatabase import MPCDatabase
 
 database = MPCDatabase()
 

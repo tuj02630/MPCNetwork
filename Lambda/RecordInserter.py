@@ -1,19 +1,17 @@
-from datetime import datetime
-
 if __name__ == "__main__":
-    from Database.Account import Account
+    from Database.Data.Account import Account
     from Database.MPCDatabase import MPCDatabase
-    from Database.Hardware import Hardware
-    from Database.Recording import Recording
+    from Database.Data.Hardware import Hardware
+    from Database.Data.Recording import Recording
     import random
     database = MPCDatabase()
     names = ["Alexander Williams", "Emma Thompson", "Liam Patterson", "Grace Harrison", "Jacob Evans", "Lily Cooper", "Ethan Mitchell", "Madison Sullivan", "Noah Garcia", "Avery Reed", "Oliver Robinson", "Chloe Parker", "William Wright", "Abigail Brooks", "James Turner", "Victoria Nelson", "Benjamin Fisher", "Isabella Bailey", "Michael Davis", "Charlotte Foster", "Samuel Murphy", "Elizabeth Ellis", "Daniel Henderson", "Harper Phillips", "Joseph Baker", "Amelia Russell", "Gabriel Grant", "Mia Webb", "Henry Howard", "Natalie Coleman", "Lucas Marshall", "Savannah Ortiz", "Christopher Simpson", "Addison West", "David Fuller", "Sofia Green", "Alexander McLean", "Hailey Shaw", "Andrew Weaver", "Avery Crawford", "Jonathan Pearson", "Samantha Hanson", "Nicholas Reed", "Aria Freeman", "Matthew Palmer", "Leah Foster", "Elijah Andrews", "Samantha Kim", "Ryan Wheeler", "Sydney Holland", "Joshua Webster", "Bella Cohen", "Christopher Richardson", "Scarlett Ortiz", "Brandon Bush", "Aubrey Tucker", "Isaac Fields", "Eva Guzman", "Anthony Lynch", "Piper Rios", "Nathaniel Snyder", "Taylor Vance", "Christopher Brooks", "Kaylee Barrett", "Dylan Wood", "Maya Howell", "Brandon Greene", "Audrey Alvarez", "Caleb Mason", "Julia Clarke", "Zachary Ortiz", "Caroline Schmidt", "Adam Hicks", "Brooklyn Crawford", "Julian Frank", "Makayla Vega", "Justin Long", "Jasmine Carpenter", "Christian Warren", "Madelyn Summers", "Robert Kim", "Peyton Velasquez", "Charles Mann", "Leah Hammond", "Isaac Peterson", "Lauren Freeman", "Jack Tucker", "Trinity Holmes", "Eric Payne", "Isabelle Vega", "Kevin Fleming", "Zoey Sandoval", "Jonathan Summers", "Kennedy Delgado", "Daniel Cabrera", "Faith Banks", "Richard Reynolds", "Olivia Best", "Gavin Steele", "Julia Peters"]
     for name in names:
-        database.insert_account(Account(name, "Password"))
+        database.insert(Account(name, "Password"))
 
     name_map = {}
     for name in names:
-        name_map[name] = database.get_account_id_by_name(name)
+        name_map[name] = database.get_id_by_name(Account, name)
 
     hardware = ["SmartWatch 360", "PixelPad", "EchoStation", "GalaxyAir", "HealthTracker Pro", "SonicSonic", "iVisionary", "HelixNet", "VisionQuest", "EcoGo", "ZenPad", "QuantumPod", "TriZone", "WristMate", "BeamBox", "FireFlyer", "SolarLink", "ZoomScope", "VitalityMax", "BioWatch", "StarLink", "SkyDrive", "PowerPod", "VibeMate", "MindWave", "QuickCharge", "FitFolio", "DigitalDrive", "AirPod", "ProSonic", "SpeedyCharge", "VisionMaster", "TrackFit", "BrightLine", "SkyPod", "HyperVision", "PureAir", "TechHive", "ConnectLink", "FlexiCharge", "SunLite", "PurePod", "VisionX", "PowerMate", "AeroPad", "LifeLink", "EdgeMax", "MindScape", "SkySync", "HealthPlus", "SmartDrive", "EchoMate", "PowerBox", "SportMate", "HyperCharge", "LifeForce", "PureSync", "FlexiPad", "AirMate", "EnergyLink", "SunMate", "WellnessLink", "TrackMate", "MindMate", "BrightDrive", "SkyView", "PulsePad", "SpeedySync", "SoundMate", "VisionMate", "AirVision", "VitalityLink", "WaveMate", "ConnectPro", "PowerSync", "FlexiSync", "TechPod", "MindSync", "PureVision", "SkyTracker", "LifePod", "EdgeLink", "EchoDrive", "VitalityDrive", "HealthSync", "SunDrive", "ConnectAir", "SkyStation", "AirSync", "SpeedyMate", "WellnessMate", "ProDrive", "PulseMate", "TechLink", "AeroCharge", "LifeCharge", "PureDrive", "MindStation", "BrightSync", "SkyGuard", "VisionGuard", "LifeGuard", "EdgeGuard", "EchoGuard", "ConnectGuard", "TechGuard", "VitalityGuard", "SkySonic", "PureSonic", "MindSonic", "HealthGuard", "SunSync", "VitalitySync", "SpeedyGuard", "FitDrive", "VisionLink", "AirGuard", "PulseGuard", "LifeSync", "SkyCharge", "MindGuard", "HealthPad", "SunLink", "ConnectDrive", "BrightMate", "EchoSync", "AeroSync", "FlexiVision", "TechSync", "PurePro", "EdgeDrive", "SkyCharge Pro", "VitalityVision", "MindCharge", "HealthDrive", "AirPro", "SunGuard", "VisionCharge", "ConnectCharge", "BrightSync Pro", "SkyPro", "PureCharge", "MindPro", "EchoCharge", "VitalityDrive", "EdgeSync", "AirStation", "VisionPro", "PulseSync", "SkyCharge Max", "TechDrive", "FitSync", "EchoPad", "PureTracker", "MindCharge Pro", "ConnectPod", "HealthMate", "SunCharge", "VitalityMate", "BrightVision", "SkyLink", "FlexiGuard", "EdgePro", "AirCharge", "EchoVision", "LifeVision", "PurePad", "MindLink", "SpeedyVision", "TechCharge", "WellnessDrive", "VitalityPro", "SkyVision", "ConnectSync", "PulseCharge", "BrightDrive Pro", "HealthDrive Pro", "EdgeMate Pro", "EchoDrive Pro", "AirCharge Pro", "VisionDrive", "PureSync Pro", "MindDrive", "SunVision", "SkyDrive Pro", "FitVision", "TechPad", "VitalityPad", "HealthSync Pro", "ConnectMate", "BrightCharge", "EchoStation Pro", "AirSync Pro", "EdgeCharge", "PureGuard", "MindSync Pro", "SkyTracker Pro", "SpeedyDrive", "WellnessSync", "VisionSync", "ConnectVision", "PulsePad Pro", "LifeCharge Pro", "SunDrive Pro", "SkyPad", "VitalityCharge", "EdgeTracker", "EchoPro", "AirDrive", "PureMate", "MindStation Pro", "TechMate", "BrightGuard", "SkyGuard Pro", "HealthCharge", "ConnectPro Plus", "FlexiLink", "EchoLink", "AirVision Pro", "VisionMate Pro", "PureCharge Pro", "MindCharge Max", "SkyCharge Plus", "VitalityDrive Pro", "SpeedySync Pro", "FitGuard", "HealthPad Pro", "SunCharge Pro", "EdgeVision", "TechSync Pro", "ConnectDrive Pro", "BrightSync Max", "EchoCharge Pro", "AirTracker", "PurePro Plus", "MindGuard Pro", "SkyPro Plus", "VisionSync Pro", "PulseDrive", "LifeSync Pro", "SunGuard Pro", "WellnessGuard", "EdgePad", "EchoMate Pro", "AirCharge Max", "PureDrive Pro", "MindVision", "SkySync Pro", "VitalitySync Pro", "SpeedyCharge Pro", "ConnectCharge Pro"]
     hardware = list(set(hardware))
@@ -24,8 +22,8 @@ if __name__ == "__main__":
     for ware in hardware:
         account_index = random.randint(0, len(names) - 1)
         account_id = name_map[names[account_index]]
-        database.insert_hardware(Hardware(ware, account_id=account_id))
-        id = database.get_hardware_id_by_name(ware)
+        database.insert(Hardware(ware, account_id=account_id))
+        id = database.get_id_by_name(Hardware, ware)
         hardware_map[ware] = id
         if account_id not in account_hardware_map:
             account_hardware_map[account_id] = [id]
@@ -45,6 +43,6 @@ if __name__ == "__main__":
         hardware_ids = account_hardware_map[account_id]
         hardware_id = hardware_ids[random.randint(0, len(hardware_ids) - 1)]
         recording = Recording(file, "CURDATE()", "NOW()", account_id=account_id, hardware_id=hardware_id)
-        database.insert_recording(recording)
+        database.insert(recording)
 
 
