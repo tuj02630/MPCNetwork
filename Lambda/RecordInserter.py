@@ -1,10 +1,10 @@
 from datetime import datetime
 
 if __name__ == "__main__":
-    from Lambda.Database.Account import Account
-    from Lambda.Database.MPCDatabase import MPCDatabase
-    from Lambda.Database.Hardware import Hardware
-    from Lambda.Database.Recording import Recording
+    from Database.Account import Account
+    from Database.MPCDatabase import MPCDatabase
+    from Database.Hardware import Hardware
+    from Database.Recording import Recording
     import random
     database = MPCDatabase()
     names = ["Alexander Williams", "Emma Thompson", "Liam Patterson", "Grace Harrison", "Jacob Evans", "Lily Cooper", "Ethan Mitchell", "Madison Sullivan", "Noah Garcia", "Avery Reed", "Oliver Robinson", "Chloe Parker", "William Wright", "Abigail Brooks", "James Turner", "Victoria Nelson", "Benjamin Fisher", "Isabella Bailey", "Michael Davis", "Charlotte Foster", "Samuel Murphy", "Elizabeth Ellis", "Daniel Henderson", "Harper Phillips", "Joseph Baker", "Amelia Russell", "Gabriel Grant", "Mia Webb", "Henry Howard", "Natalie Coleman", "Lucas Marshall", "Savannah Ortiz", "Christopher Simpson", "Addison West", "David Fuller", "Sofia Green", "Alexander McLean", "Hailey Shaw", "Andrew Weaver", "Avery Crawford", "Jonathan Pearson", "Samantha Hanson", "Nicholas Reed", "Aria Freeman", "Matthew Palmer", "Leah Foster", "Elijah Andrews", "Samantha Kim", "Ryan Wheeler", "Sydney Holland", "Joshua Webster", "Bella Cohen", "Christopher Richardson", "Scarlett Ortiz", "Brandon Bush", "Aubrey Tucker", "Isaac Fields", "Eva Guzman", "Anthony Lynch", "Piper Rios", "Nathaniel Snyder", "Taylor Vance", "Christopher Brooks", "Kaylee Barrett", "Dylan Wood", "Maya Howell", "Brandon Greene", "Audrey Alvarez", "Caleb Mason", "Julia Clarke", "Zachary Ortiz", "Caroline Schmidt", "Adam Hicks", "Brooklyn Crawford", "Julian Frank", "Makayla Vega", "Justin Long", "Jasmine Carpenter", "Christian Warren", "Madelyn Summers", "Robert Kim", "Peyton Velasquez", "Charles Mann", "Leah Hammond", "Isaac Peterson", "Lauren Freeman", "Jack Tucker", "Trinity Holmes", "Eric Payne", "Isabelle Vega", "Kevin Fleming", "Zoey Sandoval", "Jonathan Summers", "Kennedy Delgado", "Daniel Cabrera", "Faith Banks", "Richard Reynolds", "Olivia Best", "Gavin Steele", "Julia Peters"]
