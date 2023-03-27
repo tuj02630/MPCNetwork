@@ -1,6 +1,8 @@
 import sys
 
 import mysql.connector
+
+
 try:
     from Database.Data.Account import Account
 except:
@@ -32,7 +34,7 @@ class MPCDatabase:
         self.connection = mysql.connector.connect(host='mpc.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
                                                   user='admin',
                                                   password='1234567890',
-                                                  database="mydb")
+                                                  database="mydb1")
         print("Connected")
 
     def query(self, script: str) -> list:
@@ -52,7 +54,6 @@ class MPCDatabase:
             with self.connection.cursor() as cur:
                 print("[Select      ]              :" + script)
                 cur.execute(script)
-                print("[Completed   ]              :" + script)
                 return list(cur)
         except mysql.connector.Error as err:
             print("[Error   ]: {}".format(err), file=sys.stderr)
@@ -81,7 +82,32 @@ class MPCDatabase:
                 print("[Insert      ]              :" + script)
                 cur.execute(script)
                 self.connection.commit()
-                print("[Completed   ]              :" + script)
+        except mysql.connector.Error as err:
+            print("[Error       ]              :" + str(err), file=sys.stderr)
+            raise err
+        return
+
+    def truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False):
+        script = "TRUNCATE " + table_class.__name__ + ";"
+        try:
+            with self.connection.cursor() as cur:
+                if not foreign_key_check:
+                    key_check_script = "SET FOREIGN_KEY_CHECKS = 0;"
+                    print("[Foreign Key Check      ]              :" + key_check_script)
+                    cur.execute(script)
+
+                if auto_increment_reset:
+                    auto_increment_script = "ALTER TABLE " + table_class.__name__ + " AUTO_INCREMENT = 1;"
+                    print("[Auto Increment      ]              :" + key_check_script)
+                    cur.execute(script)
+
+                print("[TRUNCATE      ]              :" + script)
+                cur.execute(script)
+                self.connection.commit()
+                if not foreign_key_check:
+                    key_check_script = "SET FOREIGN_KEY_CHECKS = 1;"
+                    print("[Foreign Key Check      ]              :" + key_check_script)
+                    cur.execute(script)
         except mysql.connector.Error as err:
             print("[Error       ]              :" + str(err), file=sys.stderr)
             raise err
@@ -152,13 +178,6 @@ class MPCDatabase:
             return None
         return payload[0][table_class.ID]
 
-    def delete_all_accounts(self):
-
-        return
-
-    def delete_account(self, id):
-        return
-
     def get_all_by_account_id(self, table_class, account_id: int) -> list:
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.ACCOUNT_ID, account_id)])["data"]
@@ -199,34 +218,48 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload)
 
+    def delete_all_accounts(self):
+
+        return
+
+    def delete_account(self, id):
+        return
 
 if __name__ == "__main__":
+    from Lambda.Database.Data.Resolution import Resolution
+    from Lambda.Database.Data.Saving_Policy import Saving_Policy
+    from Lambda.Database.Data.Hardware import Hardware
+
     # print("Started")
     #
     database = MPCDatabase()
-    # database.insert_account(Account("Keita Nakashima", "1234567"), True)
-    # database.insert_account(Account("Josh Makia", "01234567"), True)
-    # database.insert_account(Account("Ben Juria", "01234567"), True)
-    # data = database.get_accounts()
-    # for d in data:
-    #     print(d)
-    # print(database.get_account_id_by_name("Ben Juria"))
-    # database.insert_hardware(Hardware("Rasberry Pi Keita", database.get_account_id_by_name("Keita Nakashima")), ignore=True)
-    # hardware = Hardware("Rasperry Pi Extra")
-    #
-    # now = datetime.datetime(2009, 5, 5)
-    # a_id = database.get_account_id_by_name("Keita Nakashima")
-    # h_id = database.get_hardware_ids_by_account_name("Keita Nakashima")[0]
-    # recording = Recording("filename7.mp4", now.strftime('%Y-%m-%d %H:%M:%S'), "NOW()", account_id=a_id, hardware_id=h_id)
-    # database.insert_recording(recording, ignore=True)
-    # data = database.get_recordings()
-    # for d in data:
-    #     print(d)
-    #
-    # data = database.get_hardwares()
-    # for d in data:
-    #     print(d)
-    # id = database.get_account_id_by_name("Keita Nakashima")
-    # database.insert_hardware(Hardware("Rasberry Pi Keita1"), associated_account_id=id, ignore=True)
-    # database.insert(Account("Keita Nakashima", "Password"))
-    print(database.gen_select_script("AA", ["Key1"], [MatchItem("Item1", "Value1"), MatchItem("Item2", "Value2")]))
+    resolution720 = Resolution("720p", 1280, 720)
+    resolution1080 = Resolution("1080p", 1920, 1080)
+    resolution1440 = Resolution("1440p", 2560, 1440)
+    database.insert(resolution720, ignore=True)
+    database.insert(resolution1080, ignore=True)
+    database.insert(resolution1440, ignore=True)
+    data = database.get_all(Resolution)
+    for d in data:
+        print(str(d))
+
+    policy10mins720 = Saving_Policy(600, "720p")
+    policy20mins720 = Saving_Policy(1200, "720p")
+    policy10mins1080 = Saving_Policy(600, "1080p")
+    policy12mins1080 = Saving_Policy(720, "720p")
+    database.insert(policy10mins720, ignore=True)
+    database.insert(policy20mins720, ignore=True)
+    database.insert(policy10mins1080, ignore=True)
+    database.insert(policy12mins1080, ignore=True)
+    data = database.get_all(Saving_Policy)
+    for d in data:
+        print(str(d))
+
+    # database.truncate(Hardware)
+    hardware1 = Hardware("Hardware-1", 1, "720p")
+
+    database.insert(hardware1, ignore=True)
+    data = database.get_all(Hardware)
+    for d in data:
+        print(str(d))
+

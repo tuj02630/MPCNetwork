@@ -9,24 +9,8 @@ def test_connect():
     database = MPCDatabase()
     assert True
 
-
-def test_query():
-    try:
-        database.query("Select * From Customer")
-    except mysql.connector.Error as err:
-        assert False
-    assert True
-
-
-def test_insert():
-    assert False
-
-
-def test_gen_select_script():
-    assert False
-
-
-def test_gen_insert_script():
+def test_account_insert():
+    database
     assert False
 
 
