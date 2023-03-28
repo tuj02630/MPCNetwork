@@ -230,6 +230,7 @@ if __name__ == "__main__":
     from Lambda.Database.Data.Resolution import Resolution
     from Lambda.Database.Data.Saving_Policy import Saving_Policy
     from Lambda.Database.Data.Hardware import Hardware
+    from Lambda.Database.Data.Recording import Recording
     from Lambda.Database.Data.Criteria import Criteria
     from Lambda.Database.Data.Notification import Notification
 
@@ -275,5 +276,6 @@ if __name__ == "__main__":
     for d in data:
         print(str(d))
 
-    notification = Notification()
+    # notification = Notification()
 
+    recording = Recording("Filename.mp4", "CURDATE()", "NOW()")

@@ -16,25 +16,22 @@ database = MPCDatabase()
 def lambda_handler(event, context):
     print(event)
     print(context)
-    print("11")
-    data = {
-        "event": event,
-        "content": context
-    }
 
     status = 200
-    para = {}
+    resource = event["resource"].lower()
+    httpMethod = event["httpMethod"].lower()
+
+    queryPara = {}
+    pathPara = {}
+
     if "queryStringParameters" in event and event["queryStringParameters"] is not None:
-        para = event["queryStringParameters"]
+        queryPara = event["queryStringParameters"]
+
+    if "pathParameters" in event and event["pathParameters"] is not None:
+        pathPara = event["pathParameters"]
 
     try:
-        if event["resource"] in api.handlers:
-            path = event["resource"].lower()
-            return api.handlers[path](event, para)
-        else:
-            status = 500
-            # data = {"error": "Error Key " + event["path"]}
-            data = event
+        return api.handlers[resource][httpMethod](event, pathPara, queryPara)
     except Exception as err:
         status = 500
         data = {"error": str(err)}
@@ -47,7 +44,7 @@ def lambda_handler(event, context):
 
 
 @api.handle("/")
-def home(event, para):
+def home(event, pathPara, queryPara):
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
@@ -56,9 +53,9 @@ def home(event, para):
 
 
 @api.handle("/image")
-def image_request(event, para):
-    if "image_name" in para:
-        image_name = para["image_name"]
+def image_request(event, pathPara, queryPara):
+    if "image_name" in queryPara:
+        image_name = queryPara["image_name"]
     else:
         image_name = "bird-thumbnail.jpg"
     response = s3.get_object(
@@ -87,9 +84,9 @@ def image_request(event, para):
 
 
 @api.handle("/video")
-def image_request(event, para):
-    if "video_name" in para:
-        video_name = para["video_name"]
+def image_request(event, pathPara, queryPara):
+    if "video_name" in queryPara:
+        video_name = queryPara["video_name"]
     else:
         video_name = "cat.mp4"
     response = s3.get_object(
@@ -111,40 +108,37 @@ def image_request(event, para):
 
 
 @api.handle("/account")
-def account_request(event, para):
-    if "account_id" not in para:
-        accounts = database.get_all(Account)
-        dict_list = [account.__dict__ for account in accounts]
+def accounts_request(event, pathPara, queryPara):
+    accounts = database.get_all(Account)
+    dict_list = [account.__dict__ for account in accounts]
 
-        body = json.dumps(dict_list)
-    else:
-        account = database.get_by_id(Account, para["account_id"])
-        body = json.dumps(account.__dict__ )
+    body = json.dumps(dict_list)
     return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json'},
             'body': body
-        }
+    }
 
 
-@api.handle("/recording")
-def recording_request(event, para):
-    if "recording_id" in para:
-        recording = database.get_by_id(Recording, para["recording_id"])
-        body = json.dumps(recording.__dict__)
+@api.handle("/account", httpMethod="POST")
+def account_insert(event, pathPara, queryPara):
+    account = Account(queryPara["username"], queryPara["password"])
+    database.insert(account)
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({"result": "processed"})
+    }
+
+
+@api.handle("/account/{id}")
+def account_request_by_id(event, pathPara, queryPara):
+    id = pathPara["id"]
+    account = database.get_by_id(Account, id)
+    if account is None:
+        body = json.dumps({})
     else:
-        if "hardware_id" in para and "account_id" in para:
-            recordings = database.get_all_by_account_id_hardware_id(Recording, para["account_id"], para["hardware_id"])
-
-        elif "account_id" in para:
-            recordings = database.get_all_by_account_id(Recording, para["account_id"])
-
-        elif "hardware_id" in para:
-            recordings = database.get_all_by_hardware_id(Recording, para["hardware_id"])
-
-        else:
-            recordings = database.get_all(Recording)
-        body = json.dumps([recording.__dict__ for recording in recordings])
+        body = json.dumps(account.__dict__)
 
     return {
         'statusCode': 200,
@@ -154,17 +148,92 @@ def recording_request(event, para):
 
 
 @api.handle("/hardware")
-def hardware_request(event, para):
-    if "hardware_id" in para:
-        hardware = database.get_by_id(Hardware, para["hardware_id"])
-        body = json.dumps(hardware.__dict__)
-    else:
-        if "account_id" in para:
-            hardwares = database.get_all_by_account_id(Hardware, para["account_id"])
+def hardwares_request(event, pathPara, queryPara):
+    hardwares = database.get_all(Hardware)
+    dict_list = [hardware.__dict__ for hardware in hardwares]
 
+    body = json.dumps(dict_list)
+    return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': body
+    }
+
+
+@api.handle("/hardware", httpMethod="POST")
+def hardware_insert(event, pathPara, queryPara):
+    try:
+        if "account_id" in queryPara:
+            hardware = Hardware(queryPara["name"], queryPara["max_resolution"], account_id=queryPara["account_id"])
         else:
-            hardwares = database.get_all(Hardware)
-        body = json.dumps([hardware.__dict__ for hardware in hardwares])
+            hardware = Hardware(queryPara["name"], queryPara["max_resolution"])
+        database.insert(hardware)
+    except Exception as err:
+        return {
+        'statusCode': 500,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({"result": "error: " + str(err)})
+    }
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({"result": "processed"})
+    }
+
+
+@api.handle("/hardware/{id}")
+def hardware_request_by_id(event, pathPara, queryPara):
+    id = pathPara["id"]
+    hardware = database.get_by_id(Hardware, id)
+    if hardware is None:
+        body = json.dumps({})
+    else:
+        body = json.dumps(hardware.__dict__)
+
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': body
+    }
+
+
+@api.handle("/recording")
+def recordings_request(event, pathPara, queryPara):
+    recordings = database.get_all(Recording)
+    dict_list = [recording.__dict__ for recording in recordings]
+
+    body = json.dumps(dict_list)
+    return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': body
+    }
+
+
+@api.handle("/recording", httpMethod="POST")
+def recording_insert(event, pathPara, queryPara):
+    recording = Recording(queryPara["file_name"], "CURDATE()", "NOW()",
+                          account_id=queryPara["account_id"], hardware_id=queryPara["hardware_id"])
+    if "date" in queryPara:
+        recording.date = queryPara["date"]
+    if "timestamp" in queryPara:
+        recording.timestamp = queryPara["timestamp"]
+    database.insert(recording)
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({"result": "processed"})
+    }
+
+
+@api.handle("/recording/{id}")
+def recording_request_by_id(event, pathPara, queryPara):
+    id = pathPara["id"]
+    recording = database.get_by_id(Recording, id)
+    if recording is None:
+        body = json.dumps({})
+    else:
+        body = json.dumps(recording.__dict__)
 
     return {
         'statusCode': 200,
@@ -176,7 +245,9 @@ def hardware_request(event, para):
 if __name__ == "__main__":
     event = {
         "queryStringParameters": {"event_type": "Hardware", "account_id": 312},
-        "path": "/a"
+        "resource": "/account/{id}",
+        "pathParameters": {"id": "2"},
+        "httpMethod": "GET"
     }
 
     print(lambda_handler(event , None))
