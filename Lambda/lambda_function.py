@@ -23,24 +23,21 @@ def lambda_handler(event, context):
     }
 
     status = 200
+    para = {}
+    if "queryStringParameters" in event and event["queryStringParameters"] is not None:
+        para = event["queryStringParameters"]
 
-    if "queryStringParameters" in event and event["queryStringParameters"] is not None and "event_type" in event["queryStringParameters"]:
-        print(event["queryStringParameters"]["event_type"])
-        print(event["queryStringParameters"])
-        event["queryStringParameters"]["event_type"] = event["queryStringParameters"]["event_type"].lower()
-        try:
-            if event["queryStringParameters"] is not None and "event_type" in event["queryStringParameters"]:
-                if event["queryStringParameters"]["event_type"] in api.handlers:
-                    return api.handlers[event["queryStringParameters"]["event_type"]](event["queryStringParameters"])
-                else:
-                    status = 500
-                    data = {"error": "Error Key " + event["queryStringParameters"]["event_type"]}
-        except Exception as err:
+    try:
+        if event["resource"] in api.handlers:
+            path = event["resource"].lower()
+            return api.handlers[path](event, para)
+        else:
             status = 500
-            data = {"error": str(err)}
-    else:
-        data = event
-
+            # data = {"error": "Error Key " + event["path"]}
+            data = event
+    except Exception as err:
+        status = 500
+        data = {"error": str(err)}
 
     return {
         'statusCode': status,
@@ -49,8 +46,17 @@ def lambda_handler(event, context):
     }
 
 
-@api.handle("Image")
-def image_request(para):
+@api.handle("/")
+def home(event, para):
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(event)
+    }
+
+
+@api.handle("/image")
+def image_request(event, para):
     if "image_name" in para:
         image_name = para["image_name"]
     else:
@@ -80,8 +86,8 @@ def image_request(para):
     # }
 
 
-@api.handle("Video")
-def image_request(para):
+@api.handle("/video")
+def image_request(event, para):
     if "video_name" in para:
         video_name = para["video_name"]
     else:
@@ -104,8 +110,8 @@ def image_request(para):
     }
 
 
-@api.handle("Account")
-def account_request(para):
+@api.handle("/account")
+def account_request(event, para):
     if "account_id" not in para:
         accounts = database.get_all(Account)
         dict_list = [account.__dict__ for account in accounts]
@@ -114,15 +120,15 @@ def account_request(para):
     else:
         account = database.get_by_id(Account, para["account_id"])
         body = json.dumps(account.__dict__ )
-    return  {
+    return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json'},
             'body': body
         }
 
 
-@api.handle("Recording")
-def recording_request(para):
+@api.handle("/recording")
+def recording_request(event, para):
     if "recording_id" in para:
         recording = database.get_by_id(Recording, para["recording_id"])
         body = json.dumps(recording.__dict__)
@@ -147,8 +153,8 @@ def recording_request(para):
     }
 
 
-@api.handle("Hardware")
-def hardware_request(para):
+@api.handle("/hardware")
+def hardware_request(event, para):
     if "hardware_id" in para:
         hardware = database.get_by_id(Hardware, para["hardware_id"])
         body = json.dumps(hardware.__dict__)
@@ -169,7 +175,8 @@ def hardware_request(para):
 
 if __name__ == "__main__":
     event = {
-        "queryStringParameters": {"event_type": "Hardware", "account_id": 312}
+        "queryStringParameters": {"event_type": "Hardware", "account_id": 312},
+        "path": "/a"
     }
 
     print(lambda_handler(event , None))

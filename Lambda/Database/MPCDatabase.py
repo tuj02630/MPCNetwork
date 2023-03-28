@@ -225,10 +225,14 @@ class MPCDatabase:
     def delete_account(self, id):
         return
 
+
 if __name__ == "__main__":
     from Lambda.Database.Data.Resolution import Resolution
     from Lambda.Database.Data.Saving_Policy import Saving_Policy
     from Lambda.Database.Data.Hardware import Hardware
+    from Lambda.Database.Data.Criteria import Criteria
+    from Lambda.Database.Data.Notification import Notification
+
 
     # print("Started")
     #
@@ -256,10 +260,20 @@ if __name__ == "__main__":
         print(str(d))
 
     # database.truncate(Hardware)
-    hardware1 = Hardware("Hardware-1", 1, "720p")
+    hardware1 = Hardware("Hardware-1", "720p")
 
     database.insert(hardware1, ignore=True)
     data = database.get_all(Hardware)
     for d in data:
         print(str(d))
+
+    criteria = Criteria(1001, 100, 100)
+    criteria1 = Criteria(1002, 100, 100)
+    database.insert(criteria)
+    database.insert(criteria1)
+    data = database.get_all(Criteria)
+    for d in data:
+        print(str(d))
+
+    notification = Notification()
 
