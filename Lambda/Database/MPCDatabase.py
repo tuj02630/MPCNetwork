@@ -3,6 +3,7 @@ import sys
 import mysql.connector
 
 
+
 try:
     from Database.Data.Account import Account
 except:
@@ -231,13 +232,33 @@ class MPCDatabase:
             return None
         return payload[0][table_class.ID]
 
-    def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id) -> list[int]:
+    def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id) -> list[int]:
+    def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
+
+    def get_notification_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
+        payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
+        return [v[table_class.NOTIFICATION_ID] for v in payload["data"]]
+
+    def get_hardware_ids_by_notification_id(self, table_class, notification_id: int) -> list[int]:
+        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
+        return [v[table_class.HARDWARE_ID] for v in payload["data"]]
+
+    def get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int):
+        match_id = int(match_id)
+        if join_field[:len("EXPLICIT")] != "EXPLICIT":
+            raise ValueError("join_field should be explicit name")
+        payload = self.select_payload(
+            table_class.TABLE, table_class.EXPLICIT_COLUMNS,
+            match_list=[MatchItem(join_table_class.__dict__[match_field], match_id)],
+            join_list=[JoinItem(JoinItem.INNER, join_table_class.TABLE, table_class.__dict__[join_field],
+                                join_table_class.__dict__[join_field])])["data"]
+
+        return table_class.list_dict_to_object_list(payload, explicit=True)
 
     def delete_all_accounts(self):
 
@@ -254,55 +275,70 @@ if __name__ == "__main__":
     from Lambda.Database.Data.Recording import Recording
     from Lambda.Database.Data.Criteria import Criteria
     from Lambda.Database.Data.Notification import Notification
+    from Lambda.Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
 
 
     # print("Started")
     #
     database = MPCDatabase()
-    resolution720 = Resolution("720p", 1280, 720)
-    resolution1080 = Resolution("1080p", 1920, 1080)
-    resolution1440 = Resolution("1440p", 2560, 1440)
-    database.insert(resolution720, ignore=True)
-    database.insert(resolution1080, ignore=True)
-    database.insert(resolution1440, ignore=True)
-    data = database.get_all(Resolution)
+    # resolution720 = Resolution("720p", 1280, 720)
+    # resolution1080 = Resolution("1080p", 1920, 1080)
+    # resolution1440 = Resolution("1440p", 2560, 1440)
+    # database.insert(resolution720, ignore=True)
+    # database.insert(resolution1080, ignore=True)
+    # database.insert(resolution1440, ignore=True)
+    # data = database.get_all(Resolution)
+    # for d in data:
+    #     print(str(d))
+    #
+    # policy10mins720 = Saving_Policy(600, "720p")
+    # policy20mins720 = Saving_Policy(1200, "720p")
+    # policy10mins1080 = Saving_Policy(600, "1080p")
+    # policy12mins1080 = Saving_Policy(720, "720p")
+    # database.insert(policy10mins720, ignore=True)
+    # database.insert(policy20mins720, ignore=True)
+    # database.insert(policy10mins1080, ignore=True)
+    # database.insert(policy12mins1080, ignore=True)
+    # data = database.get_all(Saving_Policy)
+    # for d in data:
+    #     print(str(d))
+    #
+    # # database.truncate(Hardware)
+    # hardware1 = Hardware("Hardware-1", "720p")
+    # hardware2 = Hardware("Hardware-2", "1080p")
+    # hardware3 = Hardware("Hardware-3", "1080p")
+    # hardware4 = Hardware("Hardware-4", "1080p")
+    # hardware5 = Hardware("Hardware-5", "720p")
+    #
+    # database.insert(hardware1, ignore=True)
+    # database.insert(hardware2, ignore=True)
+    # database.insert(hardware3, ignore=True)
+    # database.insert(hardware4, ignore=True)
+    # database.insert(hardware5, ignore=True)
+    #
+    # data = database.get_all(Hardware)
+    # for d in data:
+    #     print(str(d))
+    #
+    # criteria = Criteria(1001, 100, 100)
+    # criteria1 = Criteria(1002, 100, 100)
+    # database.insert(criteria, ignore=True)
+    # database.insert(criteria1, ignore=True)
+    # data = database.get_all(Criteria)
+    # for d in data:
+    #     print(str(d))
+    #
+    # notification = Notification(101, 1001)
+    # notification1 = Notification(101, 1002)
+    # database.insert(notification, ignore=True)
+    # database.insert(notification1, ignore=True)
+    # data = database.get_all(Notification)
+    # for d in data:
+    #     print(str(d))
+    # print("EXPLICIT_"[:len("EXPLICIT")] != "EXPLICIT")
+    data = database.get_all_by_join_id(Hardware, Hardware_has_Saving_Policy,
+                                       "EXPLICIT_HARDWARE_ID", "EXPLICIT_SAVING_POLICY_ID", 69)
+
     for d in data:
         print(str(d))
-
-    policy10mins720 = Saving_Policy(600, "720p")
-    policy20mins720 = Saving_Policy(1200, "720p")
-    policy10mins1080 = Saving_Policy(600, "1080p")
-    policy12mins1080 = Saving_Policy(720, "720p")
-    database.insert(policy10mins720, ignore=True)
-    database.insert(policy20mins720, ignore=True)
-    database.insert(policy10mins1080, ignore=True)
-    database.insert(policy12mins1080, ignore=True)
-    data = database.get_all(Saving_Policy)
-    for d in data:
-        print(str(d))
-
-    # database.truncate(Hardware)
-    hardware1 = Hardware("Hardware-1", "720p")
-
-    database.insert(hardware1, ignore=True)
-    data = database.get_all(Hardware)
-    for d in data:
-        print(str(d))
-
-    criteria = Criteria(1001, 100, 100)
-    criteria1 = Criteria(1002, 100, 100)
-    database.insert(criteria, ignore=True)
-    database.insert(criteria1, ignore=True)
-    data = database.get_all(Criteria)
-    for d in data:
-        print(str(d))
-
-    notification = Notification(101, 1001, 2)
-    notification1 = Notification(101, 1002, 2)
-    database.insert(notification, ignore=True)
-    database.insert(notification1, ignore=True)
-    data = database.get_all(Notification)
-    for d in data:
-        print(str(d))
-
 

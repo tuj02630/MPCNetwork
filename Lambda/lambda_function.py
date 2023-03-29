@@ -9,6 +9,8 @@ from Database.Data.Criteria import Criteria
 from Database.Data.Notification import Notification
 from Database.Data.Resolution import Resolution
 from Database.Data.Saving_Policy import Saving_Policy
+from Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
+from Database.Data.Hardware_has_Notification import Hardware_has_Notification
 
 from mpc_api import MPC_API
 import boto3
@@ -226,7 +228,9 @@ def criteria_request_by_type(event, pathPara, queryPara):
 
 @api.handle("/notification")
 def notification_request(event, pathPara, queryPara):
-    notifications = database.get_all(Notification)
+    notifications: list[Notification] = database.get_all(Notification)
+    for notification in notifications:
+        notification.hardware = database.get_hardware_ids_by_notification_id(Hardware_has_Notification, notification.notification_id)
     dict_list = Notification.list_object_to_dict_list(notifications)
 
     return json_payload(dict_list)
@@ -234,20 +238,38 @@ def notification_request(event, pathPara, queryPara):
 
 @api.handle("/notification", httpMethod="POST")
 def notification_insert(event, pathPara, queryPara):
-    notification = Notification(queryPara["notification_type"], queryPara["criteria_type"], queryPara["hardware_id"])
+    notification = Notification(queryPara["notification_type"], queryPara["criteria_type"])
     database.insert(notification)
     id = database.get_id_by_type(Notification, queryPara["notification_type"])
+    if "hardware_id" in queryPara:
+        hardware_notification = Hardware_has_Notification(queryPara["hardware_id"], id)
+        database.insert(hardware_notification)
     return json_payload({"id": id})
 
 
 @api.handle("/notification/{id}")
-def notification_request_by_type(event, pathPara, queryPara):
-    type = pathPara["id"]
-    notification = database.get_by_id(Notification, type)
+def notification_request_by_id(event, pathPara, queryPara):
+    id = pathPara["id"]
+    notification = database.get_by_id(Notification, id)
+    notification.hardware = database.get_hardware_ids_by_notification_id(Hardware_has_Notification,
+                                                                          notification.notification_id)
     body = Notification.object_to_dict(notification)
 
     return json_payload(body)
 
+
+@api.handle("/notification/{id}/add/{hardware_id}", httpMethod="POST")
+def notification_insert(event, pathPara, queryPara):
+    hardware_notification = Hardware_has_Notification(pathPara["hardware_id"], pathPara["id"])
+    database.insert(hardware_notification)
+    return json_payload({})
+
+
+@api.handle("/notification/{id}/hardware")
+def notification_hardware_request(event, pathPara, queryPara):
+    data = database.get_all_by_join_id(Hardware, Hardware_has_Notification,
+                                       "EXPLICIT_HARDWARE_ID", "EXPLICIT_NOTIFICATION_ID", pathPara["id"])
+    return json_payload(Hardware.list_object_to_dict_list(data))
 
 @api.handle("/resolution")
 def resolution_request(event, pathPara, queryPara):
@@ -276,7 +298,9 @@ def resolution_request_by_name(event, pathPara, queryPara):
 @api.handle("/saving_policy")
 def saving_policy_request(event, pathPara, queryPara):
     saving_policies = database.get_all(Saving_Policy)
-    dict_list = Resolution.list_object_to_dict_list(saving_policies)
+    for policy in saving_policies:
+        policy.hardware = database.get_hardware_ids_by_saving_policy_id(Hardware_has_Saving_Policy, policy.saving_policy_id)
+    dict_list = Saving_Policy.list_object_to_dict_list(saving_policies)
 
     return json_payload(dict_list)
 
@@ -289,30 +313,35 @@ def saving_policy_insert(event, pathPara, queryPara):
 
 
 @api.handle("/saving_policy/{id}")
-def saving_policy_request_by_name(event, pathPara, queryPara):
+def saving_policy_request_by_id(event, pathPara, queryPara):
     id = pathPara["id"]
-    saving_policy = database.get_by_name(Saving_Policy, id)
+    saving_policy = database.get_by_id(Saving_Policy, id)
+    saving_policy.hardware = database.get_hardware_ids_by_saving_policy_id(Hardware_has_Saving_Policy, saving_policy.saving_policy_id)
     body = Saving_Policy.object_to_dict(saving_policy)
 
     return json_payload(body)
 
-## TODO
-@api.handle("/saving_policy/{id}/add/{hardware_id}")
+
+@api.handle("/saving_policy/{id}/add/{hardware_id}", httpMethod="POST")
 def saving_policy_add_hardware(event, pathPara, queryPara):
-    id = pathPara["id"]
-    hardware_id = pathPara["hardware_id"]
-    saving_policy = database.get_by_name(Saving_Policy, type)
-    body = Saving_Policy.object_to_dict(saving_policy)
+    saving_policy = Hardware_has_Saving_Policy(pathPara["hardware_id"], pathPara["id"])
+    database.insert(saving_policy)
+    return json_payload({})
 
-    return json_payload(body)
+
+@api.handle("/saving_policy/{id}/hardware")
+def saving_policy_hardware_request(event, pathPara, queryPara):
+    data = database.get_all_by_join_id(Hardware, Hardware_has_Saving_Policy,
+                                       "EXPLICIT_HARDWARE_ID", "EXPLICIT_SAVING_POLICY_ID", pathPara["id"])
+    return json_payload(Hardware.list_object_to_dict_list(data))
 
 
 if __name__ == "__main__":
     event = {
         "queryStringParameters": {"event_type": "Hardware", "account_id": 312},
-        "resource": "/notification/{id}",
-        "pathParameters": {"id": "101"},
-        "httpMethod": "GET"
+        "resource": "/notification/{id}/add/{hardware_id}",
+        "pathParameters": {"id": "3", "hardware_id": 5},
+        "httpMethod": "POST"
     }
 
     print(lambda_handler(event , None))

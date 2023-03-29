@@ -22,3 +22,7 @@ class Data:
         for d in data_list:
             data.append(cls.dict_to_object(d, explicit))
         return data
+
+    # @classmethod
+    # def __getitem__(cls, item):
+    #     return cls.__dict__[item]
