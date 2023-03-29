@@ -1,4 +1,10 @@
-class Saving_Policy:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Saving_Policy(Data):
     TABLE = "Saving_Policy"
     ID = "saving_policy_id"
     MAX_TIME = "max_time"
@@ -24,10 +30,3 @@ class Saving_Policy:
             return Saving_Policy(payload[Saving_Policy.EXPLICIT_MAX_TIME], payload[Saving_Policy.EXPLICIT_RESOLUTION_NAME], payload[Saving_Policy.EXPLICIT_ID])
         else:
             return Saving_Policy(payload[Saving_Policy.MAX_TIME], payload[Saving_Policy.RESOLUTION_NAME], payload[Saving_Policy.ID])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Saving_Policy"]:
-        policies = []
-        for policy in data_list:
-            policies.append(Saving_Policy.dict_to_object(policy, explicit))
-        return policies

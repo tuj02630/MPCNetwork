@@ -1,4 +1,10 @@
-class Account:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Account(Data):
     TABLE = "Account"
     NAME = "username"
     PASSWORD = "password"
@@ -24,10 +30,3 @@ class Account:
             return Account(payload[Account.EXPLICIT_NAME], payload[Account.EXPLICIT_PASSWORD], payload[Account.EXPLICIT_ID])
         else:
             return Account(payload[Account.NAME], payload[Account.PASSWORD], payload[Account.ID])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Account"]:
-        accounts = []
-        for account in data_list:
-            accounts.append(Account.dict_to_object(account, explicit))
-        return accounts

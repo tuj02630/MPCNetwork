@@ -1,4 +1,10 @@
-class Notification:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Notification(Data):
     TABLE = "Notification"
     TYPE = "notification_type"
     ID = "notification_id"
@@ -11,9 +17,9 @@ class Notification:
     EXPLICIT_HARDWARE_ID = f"{TABLE}.{HARDWARE_ID}"
     EXPLICIT_COLUMNS = [EXPLICIT_TYPE, EXPLICIT_ID, EXPLICIT_CRITERIA_TYPE, EXPLICIT_HARDWARE_ID]
 
-    def __init__(self, notification_type: str, criteria_type: str, hardware_id: int, notification_id: int = None):
-        self.notification_type = notification_type
-        self.criteria_type = criteria_type
+    def __init__(self, notification_type: int, criteria_type: int, hardware_id: int, notification_id: int = None):
+        self.notification_type = int(notification_type)
+        self.criteria_type = int(criteria_type)
         self.hardware_id = int(hardware_id)
         self.notification_id = int(notification_id) if notification_id is not None else None
 
@@ -30,10 +36,3 @@ class Notification:
         else:
             return Notification(payload[Notification.TYPE], payload[Notification.CRITERIA_TYPE],
                                 payload[Notification.HARDWARE_ID], payload[Notification.ID])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Notification"]:
-        accounts = []
-        for account in data_list:
-            accounts.append(Notification.dict_to_object(account, explicit))
-        return accounts

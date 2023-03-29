@@ -1,4 +1,10 @@
-class Recording:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Recording(Data):
     TABLE = "Recording"
     NAME = "file_name"
     DATE = "date"
@@ -32,6 +38,35 @@ class Recording:
                "ACCOUNT_ID: {:<8} HARDWARE_ID: {:<8}".format(self.file_name, self.date, self.timestamp,
                                                               self.recording_id, self.account_id, self.hardware_id)
 
+    def add_date_timestamp_from_query_para(self, queryPara):
+        year, month, date, hour, minute, second = (1990, 1, 1, 0, 0, 0)
+        if "year" in queryPara:
+            year = queryPara["year"]
+        if "month" in queryPara:
+            month = queryPara["month"]
+        if "date" in queryPara:
+            date = queryPara["date"]
+        if "hour" in queryPara:
+            hour = queryPara["hour"]
+        if "minute" in queryPara:
+            minute = queryPara["minute"]
+        if "second" in queryPara:
+            second = queryPara["second"]
+
+        if "date" in queryPara:
+            self.date = queryPara["date"]
+        elif "year" in queryPara or "month" in queryPara or "date" in queryPara:
+            self.date = f"{year}-{month}-{date}"
+        else:
+            self.date = "CURDATE()"
+
+        if "timestamp" in queryPara:
+            self.timestamp = queryPara["timestamp"]
+        elif "year" in queryPara or "month" in queryPara or "date" in queryPara or "hour" in queryPara or "minute" in queryPara or "second" in queryPara:
+            self.timestamp = f"{year}-{month}-{date} {hour}:{minute}:{second}"
+        else:
+            self.timestamp = "NOW()"
+
     @staticmethod
     def dict_to_object(payload: dict, explicit=False) -> "Recording":
         if explicit:
@@ -50,10 +85,3 @@ class Recording:
                 payload[Recording.ID],
                 payload[Recording.ACCOUNT_ID],
                 payload[Recording.HARDWARE_ID])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Recording"]:
-        recordings = []
-        for recording in data_list:
-            recordings.append(Recording.dict_to_object(recording, explicit))
-        return recordings

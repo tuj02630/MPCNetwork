@@ -195,7 +195,7 @@ class MPCDatabase:
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.ACCOUNT_ID, account_id)])
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_ids_by_account_name(self, table_class, account_name):
+    def get_ids_by_account_name(self, table_class, account_name: str):
         payload = self.select_payload(
             table_class.TABLE, [table_class.ID],
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -204,19 +204,40 @@ class MPCDatabase:
 
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_all_by_hardware_id(self, table_class,  hardware_id):
+    def get_all_by_hardware_id(self, table_class,  hardware_id: int):
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.HARDWARE_ID, hardware_id)])["data"]
 
         return table_class.list_dict_to_object_list(payload)
 
-    def get_all_by_account_id_hardware_id(self, table_class, account_id, hardware_id):
+    def get_all_by_account_id_hardware_id(self, table_class, account_id: int, hardware_id: int):
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[
                                           MatchItem(table_class.ACCOUNT_ID, account_id),
                                           MatchItem(table_class.HARDWARE_ID, hardware_id)])["data"]
 
         return table_class.list_dict_to_object_list(payload)
+
+    def get_by_type(self, table_class, type: int):
+        data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
+            "data"]
+        if len(data) != 1:
+            return None
+        return table_class.dict_to_object(data[0])
+
+    def get_id_by_type(self, table_class, type: int) -> id:
+        payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.TYPE, type)])["data"]
+        if len(payload) == 0:
+            return None
+        return payload[0][table_class.ID]
+
+    def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id) -> list[int]:
+        payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
+        return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
+
+    def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id) -> list[int]:
+        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
+        return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
     def delete_all_accounts(self):
 
@@ -270,12 +291,18 @@ if __name__ == "__main__":
 
     criteria = Criteria(1001, 100, 100)
     criteria1 = Criteria(1002, 100, 100)
-    database.insert(criteria)
-    database.insert(criteria1)
+    database.insert(criteria, ignore=True)
+    database.insert(criteria1, ignore=True)
     data = database.get_all(Criteria)
     for d in data:
         print(str(d))
 
-    # notification = Notification()
+    notification = Notification(101, 1001, 2)
+    notification1 = Notification(101, 1002, 2)
+    database.insert(notification, ignore=True)
+    database.insert(notification1, ignore=True)
+    data = database.get_all(Notification)
+    for d in data:
+        print(str(d))
 
-    recording = Recording("Filename.mp4", "CURDATE()", "NOW()")
+

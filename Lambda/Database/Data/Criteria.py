@@ -1,4 +1,10 @@
-class Criteria:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Criteria(Data):
     TABLE = "Criteria"
     MAGNITUDE = "magnitude"
     DURATION = "duration"
@@ -24,10 +30,3 @@ class Criteria:
             return Criteria(payload[Criteria.EXPLICIT_TYPE], payload[Criteria.EXPLICIT_MAGNITUDE], payload[Criteria.EXPLICIT_DURATION])
         else:
             return Criteria(payload[Criteria.TYPE], payload[Criteria.MAGNITUDE], payload[Criteria.DURATION])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Criteria"]:
-        criteria = []
-        for c in data_list:
-            criteria.append(Criteria.dict_to_object(c, explicit))
-        return criteria

@@ -1,4 +1,10 @@
-class Resolution:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Resolution(Data):
     TABLE = "Resolution"
     NAME = "resolution_name"
     WIDTH = "width"
@@ -24,10 +30,3 @@ class Resolution:
             return Resolution(payload[Resolution.EXPLICIT_NAME], payload[Resolution.EXPLICIT_WIDTH], payload[Resolution.EXPLICIT_HEIGHT])
         else:
             return Resolution(payload[Resolution.NAME], payload[Resolution.WIDTH], payload[Resolution.HEIGHT])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Resolution"]:
-        resolutions = []
-        for resolution in data_list:
-            resolutions.append(Resolution.dict_to_object(resolution, explicit))
-        return resolutions

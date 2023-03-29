@@ -1,4 +1,10 @@
-class Hardware:
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+
+class Hardware(Data):
     TABLE = "Hardware"
     NAME = "name"
     ID = "hardware_id"
@@ -38,10 +44,3 @@ class Hardware:
             else:
                 return Hardware(payload[Hardware.NAME], payload[Hardware.RESOLUTION_NAME],
                                 payload[Hardware.ID])
-
-    @staticmethod
-    def list_dict_to_object_list(data_list: list[dict], explicit=False) -> list["Hardware"]:
-        hardwares = []
-        for hardware in data_list:
-            hardwares.append(Hardware.dict_to_object(hardware, explicit))
-        return hardwares
