@@ -38,7 +38,10 @@ def lambda_handler(event, context):
         pathPara = event["pathParameters"]
 
     try:
-        return api.handlers[resource][httpMethod](event, pathPara, queryPara)
+        if resource in  api.handlers:
+            return api.handlers[resource][httpMethod](event, pathPara, queryPara)
+        else:
+            return api.handlers["/"]["get"]({"event": event, "context": str(context)}, pathPara, queryPara)
     except Exception as err:
         status = 500
         data = {"error": str(err)}
@@ -67,12 +70,36 @@ def home(event, pathPara, queryPara):
     }
 
 
+@api.handle("/", httpMethod="POST")
+def home(event, pathPara, queryPara):
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(event)
+    }
+
+
 @api.handle("/image")
 def image_request(event, pathPara, queryPara):
-    if "image_name" in queryPara:
-        image_name = queryPara["image_name"]
-    else:
-        image_name = "bird-thumbnail.jpg"
+    image_name = "bird-thumbnail.jpg"
+    response = s3.get_object(
+        Bucket='mpc-capstone',
+        Key=image_name,
+    )
+    content_type = "image/jpeg"
+    image = response['Body'].read()
+    print(base64.b64encode(image).decode('utf-8'))
+    return {
+        'headers': {"Content-Type": content_type},
+        'statusCode': 200,
+        'body': base64.b64encode(image).decode('utf-8'),
+        'isBase64Encoded': True
+    }
+
+
+@api.handle("/image/{image_name}")
+def image_request(event, pathPara, queryPara):
+    image_name = pathPara["image_name"]
     response = s3.get_object(
         Bucket='mpc-capstone',
         Key=image_name,
@@ -91,19 +118,30 @@ def image_request(event, pathPara, queryPara):
         'body': base64.b64encode(image).decode('utf-8'),
         'isBase64Encoded': True
     }
-    # return {
-    #     'statusCode': 200,
-    #     'headers': {'Content-Type': 'text/plain'},
-    #     'body': "Video"
-    # }
 
 
 @api.handle("/video")
-def image_request(event, pathPara, queryPara):
-    if "video_name" in queryPara:
-        video_name = queryPara["video_name"]
-    else:
-        video_name = "cat.mp4"
+def video_request(event, pathPara, queryPara):
+    video_name = "cat.mp4"
+    response = s3.get_object(
+        Bucket='mpc-capstone',
+        Key=video_name,
+    )
+    content_type = "video/mp4"
+    image = response['Body'].read()
+    print(base64.b64encode(image).decode('utf-8'))
+    return {
+        'headers': {"Content-Type": content_type},
+        'statusCode': 200,
+        'body': base64.b64encode(image).decode('utf-8'),
+        'isBase64Encoded': True
+    }
+
+
+@api.handle("/video/{video_name}")
+def video_request_by_filename(event, pathPara, queryPara):
+    video_name = pathPara["video_name"]
+
     response = s3.get_object(
         Bucket='mpc-capstone',
         Key=video_name,
@@ -124,7 +162,7 @@ def image_request(event, pathPara, queryPara):
 
 @api.handle("/account")
 def accounts_request(event, pathPara, queryPara):
-    accounts = database.get_all(Account)
+    accounts: list[Account] = database.get_all(Account)
     dict_list = Account.list_object_to_dict_list(accounts)
 
     return json_payload(dict_list)
@@ -132,7 +170,7 @@ def accounts_request(event, pathPara, queryPara):
 
 @api.handle("/account", httpMethod="POST")
 def account_insert(event, pathPara, queryPara):
-    account = Account(queryPara["username"], queryPara["password"])
+    account: Account = Account(queryPara["username"], queryPara["password"])
     database.insert(account)
     id = database.get_id_by_name(Account, queryPara["username"])
     return json_payload({"id": id})
@@ -141,7 +179,7 @@ def account_insert(event, pathPara, queryPara):
 @api.handle("/account/{id}")
 def account_request_by_id(event, pathPara, queryPara):
     id = pathPara["id"]
-    account = database.get_by_id(Account, id)
+    account: Account = database.get_by_id(Account, id)
     body = Account.object_to_dict(account)
 
     return json_payload(body)
@@ -149,7 +187,7 @@ def account_request_by_id(event, pathPara, queryPara):
 
 @api.handle("/hardware")
 def hardware_request(event, pathPara, queryPara):
-    hardware = database.get_all(Hardware)
+    hardware: list[Hardware] = database.get_all(Hardware)
     dict_list = Hardware.list_object_to_dict_list(hardware)
 
     return json_payload(dict_list)
@@ -177,7 +215,15 @@ def hardware_request_by_id(event, pathPara, queryPara):
 
 @api.handle("/recording")
 def recordings_request(event, pathPara, queryPara):
-    recordings = database.get_all(Recording)
+    recordings: list[Recording] = database.get_all(Recording)
+    for rec in recordings:
+        if rec.file_name[-len(".mp4"):] == ".mp4":
+            stage = "/video/"
+        else:
+            stage = "/image/"
+        rec.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
+                  "/" + event["requestContext"]["stage"] + stage + rec.file_name
+
     dict_list = Recording.list_object_to_dict_list(recordings)
 
     return json_payload(dict_list)
@@ -197,6 +243,12 @@ def recording_insert(event, pathPara, queryPara):
 def recording_request_by_id(event, pathPara, queryPara):
     id = pathPara["id"]
     recording = database.get_by_id(Recording, id)
+    if recording.file_name[-len(".mp4"):] == ".mp4":
+        stage = "/video/"
+    else:
+        stage = "/image/"
+    recording.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
+              "/" + event["requestContext"]["stage"] + stage + recording.file_name
     body = Recording.object_to_dict(recording)
 
     return json_payload(body)
@@ -337,12 +389,22 @@ def saving_policy_hardware_request(event, pathPara, queryPara):
 
 
 if __name__ == "__main__":
+    import urllib
+    print("sdasdasdasdasd.mp4"[-len(".mp4"):])
     event = {
         "queryStringParameters": {"event_type": "Hardware", "account_id": 312},
-        "resource": "/notification/{id}/add/{hardware_id}",
+        "resource": "/video",
         "pathParameters": {"id": "3", "hardware_id": 5},
         "httpMethod": "POST"
     }
+    location = "us-east-1"
+    bucket_name = "mpc-capstone"
+    key = "cat.mp4"
 
-    print(lambda_handler(event , None))
-
+    url = "https://s3-%s.amazonaws.com/%s/%s" % (
+        location,
+        bucket_name,
+        urllib.parse.quote(key, safe="~()*!.'"),
+    )
+    # print(lambda_handler(event , None))
+    print(url)

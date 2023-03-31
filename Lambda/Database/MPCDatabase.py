@@ -38,6 +38,9 @@ class MPCDatabase:
                                                   database="mydb1")
         print("Connected")
 
+    def close(self):
+        self.connection.close()
+
     def query(self, script: str) -> list:
         """
             Perform query in database
@@ -280,7 +283,18 @@ if __name__ == "__main__":
 
     # print("Started")
     #
+
     database = MPCDatabase()
+    # account = Account("John Smith", "Password")
+    # account1 = Account("Tom Morgan", "Password")
+    # account2 = Account("Tan Pen", "Password")
+    # for a in [account, account1, account2]:
+    #     database.insert(a, ignore=True)
+    #
+    id_a = database.get_id_by_name(Account, "John Smith")
+    id_a1 = database.get_id_by_name(Account, "Tom Morgan")
+    id_a2 = database.get_id_by_name(Account, "Tan Pen")
+    #
     # resolution720 = Resolution("720p", 1280, 720)
     # resolution1080 = Resolution("1080p", 1920, 1080)
     # resolution1440 = Resolution("1440p", 2560, 1440)
@@ -295,26 +309,32 @@ if __name__ == "__main__":
     # policy20mins720 = Saving_Policy(1200, "720p")
     # policy10mins1080 = Saving_Policy(600, "1080p")
     # policy12mins1080 = Saving_Policy(720, "720p")
-    # database.insert(policy10mins720, ignore=True)
-    # database.insert(policy20mins720, ignore=True)
-    # database.insert(policy10mins1080, ignore=True)
-    # database.insert(policy12mins1080, ignore=True)
+    #
+    # for p in [policy10mins720, policy20mins720, policy10mins1080, policy12mins1080]:
+    #     database.insert(p)
+    #
     # data = database.get_all(Saving_Policy)
     # for d in data:
     #     print(str(d))
     #
     # # database.truncate(Hardware)
-    # hardware1 = Hardware("Hardware-1", "720p")
-    # hardware2 = Hardware("Hardware-2", "1080p")
-    # hardware3 = Hardware("Hardware-3", "1080p")
-    # hardware4 = Hardware("Hardware-4", "1080p")
-    # hardware5 = Hardware("Hardware-5", "720p")
+    # hardware1 = Hardware("Hardware-1", "720p", account_id=id_a1)
+    # hardware2 = Hardware("Hardware-2", "1080p", account_id=id_a1)
+    # hardware3 = Hardware("Hardware-3", "1080p", account_id=id_a)
+    # hardware4 = Hardware("Hardware-4", "1080p", account_id=id_a)
+    # hardware5 = Hardware("Hardware-5", "720p", account_id=id_a)
+    # hardware6 = Hardware("Hardware-6", "720p", account_id=id_a2)
+    # hardware7 = Hardware("Hardware-7", "720p", account_id=id_a2)
     #
-    # database.insert(hardware1, ignore=True)
-    # database.insert(hardware2, ignore=True)
-    # database.insert(hardware3, ignore=True)
-    # database.insert(hardware4, ignore=True)
-    # database.insert(hardware5, ignore=True)
+    id_h1 = database.get_id_by_name(Hardware, "Hardware-1")
+    id_h2 = database.get_id_by_name(Hardware, "Hardware-2")
+    id_h3 = database.get_id_by_name(Hardware, "Hardware-3")
+    id_h4 = database.get_id_by_name(Hardware, "Hardware-4")
+    id_h5 = database.get_id_by_name(Hardware, "Hardware-5")
+    id_h6 = database.get_id_by_name(Hardware, "Hardware-6")
+    id_h7 = database.get_id_by_name(Hardware, "Hardware-7")
+    # for h in [hardware1, hardware2, hardware3, hardware4, hardware5, hardware6, hardware7]:
+    #     database.insert(h, ignore=True)
     #
     # data = database.get_all(Hardware)
     # for d in data:
@@ -336,9 +356,27 @@ if __name__ == "__main__":
     # for d in data:
     #     print(str(d))
     # print("EXPLICIT_"[:len("EXPLICIT")] != "EXPLICIT")
-    data = database.get_all_by_join_id(Hardware, Hardware_has_Saving_Policy,
-                                       "EXPLICIT_HARDWARE_ID", "EXPLICIT_SAVING_POLICY_ID", 69)
+    # data = database.get_all_by_join_id(Hardware, Hardware_has_Saving_Policy,
+    #                                    "EXPLICIT_HARDWARE_ID", "EXPLICIT_SAVING_POLICY_ID", 69)
+    #
+    # for d in data:
+    #     print(str(d))
 
+    recording1 = Recording("_import_616e5dcf2a2362.07330217_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
+                           hardware_id=id_h4)
+    recording2 = Recording("_import_616e710b7f2ff0.35776522_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
+                           hardware_id=id_h5)
+    recording3 = Recording("_import_616e7d55dc7db8.56370719_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
+                           hardware_id=id_h1)
+    recording4 = Recording("Cat_Eye_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
+                           hardware_id=id_h2)
+    recording5 = Recording("cat.mp4", "CURDATE()", "NOW()", account_id=id_a2,
+                           hardware_id=id_h6)
+
+    for f in [recording1, recording2, recording3, recording4, recording5]:
+        database.insert(f)
+    data = database.get_all(Recording)
     for d in data:
         print(str(d))
+    database.close()
 
