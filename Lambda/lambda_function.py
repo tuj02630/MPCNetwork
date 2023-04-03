@@ -72,6 +72,18 @@ def home(event, pathPara, queryPara):
 
 @api.handle("/", httpMethod="POST")
 def home(event, pathPara, queryPara):
+    data = event["body"]
+    # stream = base64.b64encode(data.encode()).decode('utf-8')
+    stream = data.encode()
+    print("a")
+    bucket = "mpc-capstone"
+    print("aa")
+    fileName = "sample" + "." + event["multiValueHeaders"]["Content-Type"][0].split("/")[1]
+    print("b")
+    s3.put_object(Bucket=bucket, Key=fileName, Body=stream, ACL="public-read")
+
+
+    print("Upload done")
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
@@ -217,12 +229,18 @@ def hardware_request_by_id(event, pathPara, queryPara):
 def recordings_request(event, pathPara, queryPara):
     recordings: list[Recording] = database.get_all(Recording)
     for rec in recordings:
-        if rec.file_name[-len(".mp4"):] == ".mp4":
-            stage = "/video/"
-        else:
-            stage = "/image/"
-        rec.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
-                  "/" + event["requestContext"]["stage"] + stage + rec.file_name
+        # if rec.file_name[-len(".mp4"):] == ".mp4":
+        #     stage = "/video/"
+        # else:
+        #     stage = "/image/"
+        # rec.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
+        #           "/" + event["requestContext"]["stage"] + stage + rec.file_name
+        bucket = "mpc-capstone"
+        rec.url = f"https://{bucket}.s3.amazonaws.com/{rec.file_name}"
+        host = event["multiValueHeaders"]["Host"][0]
+        stage = event["requestContext"]["stage"]
+        path = "storage"
+        rec.alt_url = f"https://{host}/{stage}/{path}/{bucket}/{rec.file_name}"
 
     dict_list = Recording.list_object_to_dict_list(recordings)
 
@@ -243,12 +261,18 @@ def recording_insert(event, pathPara, queryPara):
 def recording_request_by_id(event, pathPara, queryPara):
     id = pathPara["id"]
     recording = database.get_by_id(Recording, id)
-    if recording.file_name[-len(".mp4"):] == ".mp4":
-        stage = "/video/"
-    else:
-        stage = "/image/"
-    recording.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
-              "/" + event["requestContext"]["stage"] + stage + recording.file_name
+    # if recording.file_name[-len(".mp4"):] == ".mp4":
+    #     stage = "/video/"
+    # else:
+    #     stage = "/image/"
+    # recording.url = event["multiValueHeaders"]["X-Forwarded-Proto"][0] + "://" + event["multiValueHeaders"]["Host"][0] + \
+    #           "/" + event["requestContext"]["stage"] + stage + recording.file_name
+    bucket = "mpc-capstone"
+    recording.url = f"https://{bucket}.s3.amazonaws.com/{recording.file_name}"
+    host = event["multiValueHeaders"]["Host"][0]
+    stage = event["requestContext"]["stage"]
+    path = "storage"
+    recording.alt_url = f"https://{host}/{stage}/{path}/{bucket}/{recording.file_name}"
     body = Recording.object_to_dict(recording)
 
     return json_payload(body)
