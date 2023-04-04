@@ -293,10 +293,10 @@ def criteria_insert(event, pathPara, queryPara):
     return json_payload({})
 
 
-@api.handle("/criteria/{type}")
+@api.handle("/criteria/{id}")
 def criteria_request_by_type(event, pathPara, queryPara):
-    type = pathPara["type"]
-    criteria = database.get_by_type(Criteria, type)
+    id = pathPara["id"]
+    criteria = database.get_by_id(Criteria, id)
     body = Criteria.object_to_dict(criteria)
 
     return json_payload(body)
@@ -314,7 +314,7 @@ def notification_request(event, pathPara, queryPara):
 
 @api.handle("/notification", httpMethod="POST")
 def notification_insert(event, pathPara, queryPara):
-    notification = Notification(queryPara["notification_type"], queryPara["criteria_type"])
+    notification = Notification(queryPara["notification_type"], queryPara["criteria_id"])
     database.insert(notification)
     id = database.get_id_by_type(Notification, queryPara["notification_type"])
     if "hardware_id" in queryPara:

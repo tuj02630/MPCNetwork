@@ -279,7 +279,7 @@ if __name__ == "__main__":
     from Lambda.Database.Data.Criteria import Criteria
     from Lambda.Database.Data.Notification import Notification
     from Lambda.Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
-
+    import random
 
     # print("Started")
     #
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     # account2 = Account("Tan Pen", "Password")
     # for a in [account, account1, account2]:
     #     database.insert(a, ignore=True)
-    #
+
     id_a = database.get_id_by_name(Account, "John Smith")
     id_a1 = database.get_id_by_name(Account, "Tom Morgan")
     id_a2 = database.get_id_by_name(Account, "Tan Pen")
@@ -317,7 +317,7 @@ if __name__ == "__main__":
     # for d in data:
     #     print(str(d))
     #
-    # # database.truncate(Hardware)
+    # database.truncate(Hardware)
     # hardware1 = Hardware("Hardware-1", "720p", account_id=id_a1)
     # hardware2 = Hardware("Hardware-2", "1080p", account_id=id_a1)
     # hardware3 = Hardware("Hardware-3", "1080p", account_id=id_a)
@@ -325,14 +325,11 @@ if __name__ == "__main__":
     # hardware5 = Hardware("Hardware-5", "720p", account_id=id_a)
     # hardware6 = Hardware("Hardware-6", "720p", account_id=id_a2)
     # hardware7 = Hardware("Hardware-7", "720p", account_id=id_a2)
-    #
-    id_h1 = database.get_id_by_name(Hardware, "Hardware-1")
-    id_h2 = database.get_id_by_name(Hardware, "Hardware-2")
-    id_h3 = database.get_id_by_name(Hardware, "Hardware-3")
-    id_h4 = database.get_id_by_name(Hardware, "Hardware-4")
-    id_h5 = database.get_id_by_name(Hardware, "Hardware-5")
-    id_h6 = database.get_id_by_name(Hardware, "Hardware-6")
-    id_h7 = database.get_id_by_name(Hardware, "Hardware-7")
+
+    id_a_h = database.get_ids_by_account_name(Hardware, "John Smith")
+    id_a1_h = database.get_ids_by_account_name(Hardware, "Tom Morgan")
+    id_a2_h = database.get_ids_by_account_name(Hardware, "Tan Pen")
+
     # for h in [hardware1, hardware2, hardware3, hardware4, hardware5, hardware6, hardware7]:
     #     database.insert(h, ignore=True)
     #
@@ -348,8 +345,11 @@ if __name__ == "__main__":
     # for d in data:
     #     print(str(d))
     #
-    # notification = Notification(101, 1001)
-    # notification1 = Notification(101, 1002)
+    # id_c = database.get_id_by_type(Criteria, 1001)
+    # id1_c = database.get_id_by_type(Criteria, 1002)
+    #
+    # notification = Notification(101, id_c)
+    # notification1 = Notification(101, id1_c)
     # database.insert(notification, ignore=True)
     # database.insert(notification1, ignore=True)
     # data = database.get_all(Notification)
@@ -363,15 +363,15 @@ if __name__ == "__main__":
     #     print(str(d))
 
     recording1 = Recording("_import_616e5dcf2a2362.07330217_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
-                           hardware_id=id_h4)
+                           hardware_id=random.choice(id_a_h))
     recording2 = Recording("_import_616e710b7f2ff0.35776522_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
-                           hardware_id=id_h5)
+                           hardware_id=random.choice(id_a_h))
     recording3 = Recording("_import_616e7d55dc7db8.56370719_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
-                           hardware_id=id_h1)
+                           hardware_id=random.choice(id_a1_h))
     recording4 = Recording("Cat_Eye_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
-                           hardware_id=id_h2)
+                           hardware_id=random.choice(id_a1_h))
     recording5 = Recording("cat.mp4", "CURDATE()", "NOW()", account_id=id_a2,
-                           hardware_id=id_h6)
+                           hardware_id=random.choice(id_a2_h))
 
     for f in [recording1, recording2, recording3, recording4, recording5]:
         database.insert(f)
