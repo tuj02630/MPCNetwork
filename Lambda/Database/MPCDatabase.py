@@ -1,4 +1,5 @@
 import sys
+from typing import Match
 
 import mysql.connector
 
@@ -13,7 +14,7 @@ except:
 class MatchItem:
     def __init__(self, key: str, value, table: str = None):
         self.key = key
-        self.value = f"'{value}'" if type(value) is str else f"{str(value)}"
+        self.value = f"'{value}'" if type(value) is str and value[-1:] != ")" else f"{str(value)}"
 
 
 class JoinItem:
@@ -35,7 +36,7 @@ class MPCDatabase:
         self.connection = mysql.connector.connect(host='mpc.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
                                                   user='admin',
                                                   password='1234567890',
-                                                  database="mydb1")
+                                                  database="mydb2")
         print("Connected")
 
     def close(self):
@@ -117,6 +118,19 @@ class MPCDatabase:
             raise err
         return
 
+    def update(self, table_class, condition_item: MatchItem, update_list: [MatchItem]):
+        script = self.gen_update_script(table_class.__name__, condition_item, update_list)
+        if "update" not in script.lower():
+            raise TypeError("Update should only be Update")
+        try:
+            with self.connection.cursor() as cur:
+                print("[Update      ]              :" + script)
+                cur.execute(script)
+                # return list(cur)
+        except mysql.connector.Error as err:
+            print("[Error   ]: {}".format(err), file=sys.stderr)
+            raise err
+
     def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
         join_clause = "".join(
                    [" {} Join {} On {} = {}".format(item.join_type, item.join_table, item.join_field1, item.join_field2)
@@ -134,7 +148,12 @@ class MPCDatabase:
         return "Insert " + \
                ("Ignore" if ignore else "") + \
                " Into " + table_name + \
-               "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str and v[-2:] != "()" else f"{str(v)}") for v in values]) + ");"
+               "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str and v[-1:] != ")" else f"{str(v)}") for v in values]) + ");"
+
+    def gen_update_script(self, table_name: str, condition_item: MatchItem, update_items: list[MatchItem]):
+        return  "Update " + table_name + \
+                " Set " + ", ".join([f"{item.key} = {item.value}"for item in update_items]) + \
+                " Where " + f"{condition_item.key} = {condition_item.value}"
 
     def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> dict:
         script = self.gen_select_script(table_name, columns, match_list, join_list)
@@ -181,6 +200,12 @@ class MPCDatabase:
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
+
+    def get_max_id(self, table_class):
+        payload = self.select_payload(table_class.TABLE, [f"max({table_class.ID})"])["data"]
+        if len(payload) == 0:
+            return None
+        return payload[0][f"max({table_class.ID})"]
 
     def get_all_by_account_id(self, table_class, account_id: int) -> list:
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
@@ -270,7 +295,6 @@ class MPCDatabase:
     def delete_account(self, id):
         return
 
-
 if __name__ == "__main__":
     from Lambda.Database.Data.Resolution import Resolution
     from Lambda.Database.Data.Saving_Policy import Saving_Policy
@@ -285,15 +309,15 @@ if __name__ == "__main__":
     #
 
     database = MPCDatabase()
-    # account = Account("John Smith", "Password")
-    # account1 = Account("Tom Morgan", "Password")
-    # account2 = Account("Tan Pen", "Password")
+    # account = Account("John Smith", "Password", "default@exmple.com")
+    # account1 = Account("Tom Morgan", "Password", "default@exmple.com")
+    # account2 = Account("Tan Pen", "Password", "default@exmple.com")
     # for a in [account, account1, account2]:
     #     database.insert(a, ignore=True)
-
-    id_a = database.get_id_by_name(Account, "John Smith")
-    id_a1 = database.get_id_by_name(Account, "Tom Morgan")
-    id_a2 = database.get_id_by_name(Account, "Tan Pen")
+    #
+    # id_a = database.get_id_by_name(Account, "John Smith")
+    # id_a1 = database.get_id_by_name(Account, "Tom Morgan")
+    # id_a2 = database.get_id_by_name(Account, "Tan Pen")
     #
     # resolution720 = Resolution("720p", 1280, 720)
     # resolution1080 = Resolution("1080p", 1920, 1080)
@@ -325,11 +349,11 @@ if __name__ == "__main__":
     # hardware5 = Hardware("Hardware-5", "720p", account_id=id_a)
     # hardware6 = Hardware("Hardware-6", "720p", account_id=id_a2)
     # hardware7 = Hardware("Hardware-7", "720p", account_id=id_a2)
-
-    id_a_h = database.get_ids_by_account_name(Hardware, "John Smith")
-    id_a1_h = database.get_ids_by_account_name(Hardware, "Tom Morgan")
-    id_a2_h = database.get_ids_by_account_name(Hardware, "Tan Pen")
-
+    #
+    # id_a_h = database.get_ids_by_account_name(Hardware, "John Smith")
+    # id_a1_h = database.get_ids_by_account_name(Hardware, "Tom Morgan")
+    # id_a2_h = database.get_ids_by_account_name(Hardware, "Tan Pen")
+    #
     # for h in [hardware1, hardware2, hardware3, hardware4, hardware5, hardware6, hardware7]:
     #     database.insert(h, ignore=True)
     #
@@ -361,22 +385,31 @@ if __name__ == "__main__":
     #
     # for d in data:
     #     print(str(d))
-
-    recording1 = Recording("_import_616e5dcf2a2362.07330217_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
-                           hardware_id=random.choice(id_a_h))
-    recording2 = Recording("_import_616e710b7f2ff0.35776522_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
-                           hardware_id=random.choice(id_a_h))
-    recording3 = Recording("_import_616e7d55dc7db8.56370719_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
-                           hardware_id=random.choice(id_a1_h))
-    recording4 = Recording("Cat_Eye_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
-                           hardware_id=random.choice(id_a1_h))
-    recording5 = Recording("cat.mp4", "CURDATE()", "NOW()", account_id=id_a2,
-                           hardware_id=random.choice(id_a2_h))
-
-    for f in [recording1, recording2, recording3, recording4, recording5]:
-        database.insert(f)
-    data = database.get_all(Recording)
-    for d in data:
-        print(str(d))
+    #
+    # recording1 = Recording("_import_616e5dcf2a2362.07330217_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
+    #                        hardware_id=random.choice(id_a_h))
+    # recording2 = Recording("_import_616e710b7f2ff0.35776522_preview.mp4", "CURDATE()", "NOW()", account_id=id_a,
+    #                        hardware_id=random.choice(id_a_h))
+    # recording3 = Recording("_import_616e7d55dc7db8.56370719_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
+    #                        hardware_id=random.choice(id_a1_h))
+    # recording4 = Recording("Cat_Eye_preview.mp4", "CURDATE()", "NOW()", account_id=id_a1,
+    #                        hardware_id=random.choice(id_a1_h))
+    # recording5 = Recording("cat.mp4", "CURDATE()", "NOW()", account_id=id_a2,
+    #                        hardware_id=random.choice(id_a2_h))
+    #
+    # for f in [recording1, recording2, recording3, recording4, recording5]:
+    #     database.insert(f)
+    # data = database.get_all(Recording)
+    # for d in data:
+    #     print(str(d))
+    #
+    # a = Account("Keita Nakashima", "Password", "tun05036@temple.edu")
+    # database.insert(a, ignore=True)
+    #
+    # database.update(Account, MatchItem(Account.ID, 4), [MatchItem(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))")])
+    # a = database.get_by_name(Account, "Keita Nakashima")
+    # print(a)
+    max = database.get_max_id(Account)
+    print(max)
     database.close()
 

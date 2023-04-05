@@ -72,15 +72,15 @@ def home(event, pathPara, queryPara):
 
 @api.handle("/", httpMethod="POST")
 def home(event, pathPara, queryPara):
-    data = event["body"]
-    # stream = base64.b64encode(data.encode()).decode('utf-8')
-    stream = data.encode()
-    print("a")
-    bucket = "mpc-capstone"
-    print("aa")
-    fileName = "sample" + "." + event["multiValueHeaders"]["Content-Type"][0].split("/")[1]
-    print("b")
-    s3.put_object(Bucket=bucket, Key=fileName, Body=stream, ACL="public-read")
+    # data = event["body"]
+    # # stream = base64.b64encode(data.encode()).decode('utf-8')
+    # stream = data.encode()
+    # print("a")
+    # bucket = "mpc-capstone"
+    # print("aa")
+    # fileName = "sample" + "." + event["multiValueHeaders"]["Content-Type"][0].split("/")[1]
+    # print("b")
+    # s3.put_object(Bucket=bucket, Key=fileName, Body=stream, ACL="public-read")
 
 
     print("Upload done")
@@ -180,12 +180,25 @@ def accounts_request(event, pathPara, queryPara):
     return json_payload(dict_list)
 
 
+@api.handle("/account/signup", httpMethod="POST")
+def account_signup(event, pathPara, queryPara):
+    body = event["body"]
+
+    dec = json.loads(base64.b64decode(body).decode('utf-8'))
+    print(dec)
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(dec)
+    }
+
+
 @api.handle("/account", httpMethod="POST")
 def account_insert(event, pathPara, queryPara):
-    account: Account = Account(queryPara["username"], queryPara["password"])
+    account: Account = Account(queryPara["username"], queryPara["password"], queryPara["email"], "C")
     database.insert(account)
-    id = database.get_id_by_name(Account, queryPara["username"])
-    return json_payload({"id": id})
+    a: Account = database.get_by_name(Account, queryPara["username"])
+    return json_payload({"id": a.account_id, "token": a.token})
 
 
 @api.handle("/account/{id}")
@@ -316,7 +329,8 @@ def notification_request(event, pathPara, queryPara):
 def notification_insert(event, pathPara, queryPara):
     notification = Notification(queryPara["notification_type"], queryPara["criteria_id"])
     database.insert(notification)
-    id = database.get_id_by_type(Notification, queryPara["notification_type"])
+    # id = database.get_id_by_type(Notification, queryPara["notification_type"])
+    id = database.get_max_id(Notification)
     if "hardware_id" in queryPara:
         hardware_notification = Hardware_has_Notification(queryPara["hardware_id"], id)
         database.insert(hardware_notification)
@@ -414,21 +428,15 @@ def saving_policy_hardware_request(event, pathPara, queryPara):
 
 if __name__ == "__main__":
     import urllib
-    print("sdasdasdasdasd.mp4"[-len(".mp4"):])
-    event = {
-        "queryStringParameters": {"event_type": "Hardware", "account_id": 312},
-        "resource": "/video",
-        "pathParameters": {"id": "3", "hardware_id": 5},
-        "httpMethod": "POST"
-    }
-    location = "us-east-1"
-    bucket_name = "mpc-capstone"
-    key = "cat.mp4"
+    d = "ew0KICAgICJ1c2VybmFtZSI6ICJ1c2VybmFtZSINCn0="
+    # d = "LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTk1NjQwNjEwNjMyNjkxNTMxMDUwMDUyNw0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ1c2VybmFtZSINCg0KdXNlcm5hbWUNCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS05NTY0MDYxMDYzMjY5MTUzMTA1MDA1MjctLQ0K"
+    # d = base64.b64encode(json.dumps({"a":"aa", "b": "bb"}).encode("utf-8")).decode('utf-8')
+    print(d)
+    dec = base64.b64decode(d).decode('utf-8')
+    print(dec)
+    # da = json.loads(d)
+    print(json.loads(dec))
+    print(json.loads("{\r\n    \"username\": \"username\",\r\n    \"password\": \"password\",\r\n    \"email\": \"email\",\r\n    \"list\": [\"item1\", \"item2\"]\r\n}"))
+    # e = base64.b64encode(da)
 
-    url = "https://s3-%s.amazonaws.com/%s/%s" % (
-        location,
-        bucket_name,
-        urllib.parse.quote(key, safe="~()*!.'"),
-    )
-    # print(lambda_handler(event , None))
-    print(url)
+

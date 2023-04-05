@@ -54,17 +54,32 @@ def video_sending_thread():
     title = 'SENDING VIDEO ' + str(os.getpid())
     vid_socket.settimeout(15)
     vid_socket.sendto(b'CLIENT_TYPE_SV', v_addr)
-    try:
-        vid_socket.recvfrom(BUFF_SIZE)
-    except TimeoutError or ConnectionResetError:
-        print("No response from server. Is it running?")
-        exit(1)
+    # try:
+    #     vid_socket.recvfrom(BUFF_SIZE)
+    # except TimeoutError or ConnectionResetError:
+    #     print("No response from server. Is it running?")
+    #     exit(1)
     while True:
         while vid.isOpened():
             _, frame = vid.read()
             frame = imutils.resize(frame, WIDTH)
             encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+
             message = base64.b64encode(buffer)
+            # jpg_as_text = base64.b64encode(buffer)
+            # with open('enc.txt', 'wb') as f_output:
+            #     f_output.write(jpg_as_text)
+            #     f_output.close()
+            # print(jpg_as_text)
+            #
+            # # Convert back to binary
+            # jpg_original = base64.b64decode(jpg_as_text)
+            #
+            # # Write to a file to show conversion worked
+            # with open('test.jpg', 'wb') as f_output:
+            #     f_output.write(jpg_original)
+            #     f_output.close()
+            # return
             vid_socket.sendto(message, v_addr)
             frame = cv2.putText(frame, 'FPS: ' + str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             cv2.imshow(title, frame)
