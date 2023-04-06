@@ -174,7 +174,7 @@ class MPCDatabase:
         return len(entries["data"]) == 1
 
     def verify_name(self, table_class, name: str) -> bool:
-        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])
+        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.NAME, name)])
         return len(entries["data"]) == 1
 
     def get_by_name(self, table_class, name: str):
@@ -414,6 +414,7 @@ if __name__ == "__main__":
     # a = database.get_by_name(Account, "Keita Nakashima")
     # print(a)
     max = database.get_max_id(Account)
+    print(database.verify_name(Account, "Keita Nakashima"))
     print(max)
     database.close()
 
