@@ -177,6 +177,23 @@ class MPCDatabase:
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.NAME, name)])
         return len(entries["data"]) == 1
 
+    def verify_field(self, table_class, field: str, value: str):
+        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
+                                      match_list=[MatchItem(field, value)])
+        return len(entries["data"]) == 1
+
+    def verify_fields(self, table_class, field_value_list: list[tuple]):
+        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
+                                      match_list=[MatchItem(item[0], item[1]) for item in field_value_list])
+        return len(entries["data"]) == 1
+
+    def get_field_by_name(self, table_class, field: str, name: str):
+        entries = self.select_payload(table_class.TABLE, [field],
+                                      match_list=[MatchItem(table_class.NAME, name)])
+        if len(entries["data"]) == 0:
+            return None
+        return entries["data"][0][field]
+
     def get_by_name(self, table_class, name: str):
         """
             Execute query to get the account information related to the given id
@@ -414,7 +431,7 @@ if __name__ == "__main__":
     # a = database.get_by_name(Account, "Keita Nakashima")
     # print(a)
     max = database.get_max_id(Account)
-    print(database.verify_name(Account, "Keita Nakashima"))
+    print(database.get_field_by_name(Account, Account.TOKEN, "Keita Nakashima"))
     print(max)
     database.close()
 

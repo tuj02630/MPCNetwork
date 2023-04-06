@@ -11,6 +11,7 @@ from Database.Data.Resolution import Resolution
 from Database.Data.Saving_Policy import Saving_Policy
 from Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
 from Database.Data.Hardware_has_Notification import Hardware_has_Notification
+from Error import Error
 
 from mpc_api import MPC_API
 import boto3
@@ -55,7 +56,13 @@ def lambda_handler(event, context):
     }
 
 
-def json_payload(body):
+def json_payload(body, error: list = []):
+    if len(error) == 0:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({"error": error})
+        }
     return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json'},
@@ -70,13 +77,12 @@ def is_valid(email):
     else:
         return False
 
+
 def check_password(password):
     if re.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password):
         return True
     else:
         return False
-
-
 # no match
 
 @api.handle("/")
@@ -202,18 +208,30 @@ def accounts_request(event, pathPara, queryPara):
 def account_signup(event, pathPara, queryPara):
     body = event["body"]
     data = json.loads(body)
-
-    if not database.verify_id(Account, ):
-
+    error = []
+    if not database.verify_name(Account, data[Account.NAME]):
+        error.append(Error.NAME_NOT_FOUND)
     if not is_valid(body["email"]):
-
+        error.append(Error.INVALID_EMAIL_FORMAT)
     if not check_password(body["password"]):
+        error.append(Error.PASSWORD_WEAK)
 
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps(dec)
-    }
+    if len(error) == 0:
+        database.insert(Account(data["username"], data["password"], data["email"]))
+    return json_payload({"message": "Account created"})
+
+
+@api.handle("/account/signin", httpMethod="POST")
+def account_signup(event, pathPara, queryPara):
+    body = event["body"]
+    data = json.loads(body)
+    error = []
+    if not database.verify_name(Account, event[Account.NAME]):
+        error.append(Error.NAME_NOT_FOUND)
+    if not database.get_field_by_name(Account, Account.NAME, event[Account.NAME]):
+        error.append(Error.PASSWORD_MISMATCH)
+    token = database.get_field_by_name(Account, Account.TOKEN, data[Account.NAME])
+    return json_payload({"message": "Account created", Account.TOKEN:  token})
 
 
 @api.handle("/account", httpMethod="POST")
