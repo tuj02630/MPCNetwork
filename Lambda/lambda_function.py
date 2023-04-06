@@ -14,6 +14,8 @@ from Database.Data.Hardware_has_Notification import Hardware_has_Notification
 
 from mpc_api import MPC_API
 import boto3
+import re
+
 
 api = MPC_API()
 s3 = boto3.client('s3')
@@ -60,6 +62,22 @@ def json_payload(body):
             'body': json.dumps(body)
     }
 
+
+def is_valid(email):
+    regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+    if re.fullmatch(regex, email):
+        return True
+    else:
+        return False
+
+def check_password(password):
+    if re.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password):
+        return True
+    else:
+        return False
+
+
+# no match
 
 @api.handle("/")
 def home(event, pathPara, queryPara):
@@ -183,9 +201,14 @@ def accounts_request(event, pathPara, queryPara):
 @api.handle("/account/signup", httpMethod="POST")
 def account_signup(event, pathPara, queryPara):
     body = event["body"]
+    data = json.loads(body)
 
-    dec = json.loads(base64.b64decode(body).decode('utf-8'))
-    print(dec)
+    if not database.verify_id(Account, ):
+
+    if not is_valid(body["email"]):
+
+    if not check_password(body["password"]):
+
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
@@ -439,4 +462,4 @@ if __name__ == "__main__":
     print(json.loads("{\r\n    \"username\": \"username\",\r\n    \"password\": \"password\",\r\n    \"email\": \"email\",\r\n    \"list\": [\"item1\", \"item2\"]\r\n}"))
     # e = base64.b64encode(da)
 
-
+    print(is_valid("fes7713@yahoo.co.jp"))

@@ -173,6 +173,10 @@ class MPCDatabase:
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])
         return len(entries["data"]) == 1
 
+    def verify_name(self, table_class, name: str) -> bool:
+        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])
+        return len(entries["data"]) == 1
+
     def get_by_name(self, table_class, name: str):
         """
             Execute query to get the account information related to the given id
