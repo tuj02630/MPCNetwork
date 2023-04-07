@@ -2,8 +2,7 @@ import sys
 from typing import Match
 
 import mysql.connector
-
-
+from matplotlib.table import table
 
 try:
     from Database.Data.Account import Account
@@ -127,6 +126,21 @@ class MPCDatabase:
                 print("[Update      ]              :" + script)
                 cur.execute(script)
                 # return list(cur)
+                self.connection.commit()
+        except mysql.connector.Error as err:
+            print("[Error   ]: {}".format(err), file=sys.stderr)
+            raise err
+
+    def delete(self, table_class, condition_item: MatchItem):
+        script = f"Delete From {table_class.__name__} Where {condition_item.key} = {condition_item.value}"
+        if "delete" not in script.lower():
+            raise TypeError("Delete should only be delete")
+        try:
+            with self.connection.cursor() as cur:
+                print("[Delete      ]              :" + script)
+                cur.execute(script)
+                # return list(cur)
+                self.connection.commit()
         except mysql.connector.Error as err:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
@@ -165,18 +179,6 @@ class MPCDatabase:
 
         return payload
 
-    def get_all(self, table_class) -> list:
-        payload = self.select_payload(table_class.TABLE, table_class.COLUMNS)
-        return table_class.list_dict_to_object_list(payload["data"])
-
-    def verify_id(self, table_class, id: int) -> bool:
-        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])
-        return len(entries["data"]) == 1
-
-    def verify_name(self, table_class, name: str) -> bool:
-        entries = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.NAME, name)])
-        return len(entries["data"]) == 1
-
     def verify_field(self, table_class, field: str, value: str):
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(field, value)])
@@ -186,6 +188,16 @@ class MPCDatabase:
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(item[0], item[1]) for item in field_value_list])
         return len(entries["data"]) == 1
+
+    def verify_id(self, table_class, id: int) -> bool:
+        return self.verify_field(table_class, table_class.ID, str(id))
+
+    def verify_name(self, table_class, name: str) -> bool:
+        return self.verify_field(table_class, table_class.NAME, name)
+
+    def get_all(self, table_class) -> list:
+        payload = self.select_payload(table_class.TABLE, table_class.COLUMNS)
+        return table_class.list_dict_to_object_list(payload["data"])
 
     def get_field_by_name(self, table_class, field: str, name: str):
         entries = self.select_payload(table_class.TABLE, [field],
@@ -313,12 +325,11 @@ class MPCDatabase:
         self.update(table_class, MatchItem(condition_tuple[0], condition_tuple[1]),
                     [MatchItem(item[0], item[1]) for item in update_list])
 
-    def delete_all_accounts(self):
+    def delete_by_field(self, table_class, condition_field: tuple[str, str]):
+        self.delete(table_class, MatchItem(condition_field[0], condition_field[1]))
 
-        return
 
-    def delete_account(self, id):
-        return
+
 
 if __name__ == "__main__":
     from Lambda.Database.Data.Resolution import Resolution
@@ -437,5 +448,8 @@ if __name__ == "__main__":
     max = database.get_max_id(Account)
     print(database.get_field_by_name(Account, Account.TOKEN, "Keita Nakashima"))
     print(max)
+
+    database.delete(Account, MatchItem(Account.NAME, "username"))
+    print("Value" + str(database.get_field_by_name(Account, Account.ID, "username")))
     database.close()
 
