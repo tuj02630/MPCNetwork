@@ -40,6 +40,9 @@ def lambda_handler(event, context):
     if "pathParameters" in event and event["pathParameters"] is not None:
         pathPara = event["pathParameters"]
 
+    if "body" in event and event["body"] is not None:
+        event["body"] = json.loads(event["body"])
+
     try:
         if resource in  api.handlers:
             return api.handlers[resource][httpMethod](event, pathPara, queryPara)
@@ -57,11 +60,11 @@ def lambda_handler(event, context):
 
 
 def json_payload(body, error: list = []):
-    if len(error) == 0:
+    if len(error) != 0:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({"error": error})
+            'body': json.dumps({"body": body, "error": error})
         }
     return {
             'statusCode': 200,
@@ -70,7 +73,7 @@ def json_payload(body, error: list = []):
     }
 
 
-def is_valid(email):
+def check_email(email):
     regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
     if re.fullmatch(regex, email):
         return True
@@ -207,31 +210,39 @@ def accounts_request(event, pathPara, queryPara):
 @api.handle("/account/signup", httpMethod="POST")
 def account_signup(event, pathPara, queryPara):
     body = event["body"]
-    data = json.loads(body)
     error = []
-    if not database.verify_name(Account, data[Account.NAME]):
-        error.append(Error.NAME_NOT_FOUND)
-    if not is_valid(body["email"]):
+    if database.verify_name(Account, body[Account.NAME]):
+        error.append(Error.NAME_DUPLICATE)
+    if not check_email(body["email"]):
         error.append(Error.INVALID_EMAIL_FORMAT)
     if not check_password(body["password"]):
         error.append(Error.PASSWORD_WEAK)
 
     if len(error) == 0:
-        database.insert(Account(data["username"], data["password"], data["email"]))
-    return json_payload({"message": "Account created"})
+        database.insert(Account(body["username"], body["password"], body["email"]))
+        return json_payload({"message": "Account created"})
+    return json_payload(None, error)
 
 
 @api.handle("/account/signin", httpMethod="POST")
-def account_signup(event, pathPara, queryPara):
-    body = event["body"]
-    data = json.loads(body)
+def account_signin(event, pathPara, queryPara):
+    body: dict = event["body"]
     error = []
-    if not database.verify_name(Account, event[Account.NAME]):
+    if not database.verify_name(Account, body[Account.NAME]):
         error.append(Error.NAME_NOT_FOUND)
-    if not database.get_field_by_name(Account, Account.NAME, event[Account.NAME]):
+    if not database.verify_fields(
+            Account, [(Account.NAME, body[Account.NAME]), (Account.PASSWORD, body[Account.PASSWORD])]):
         error.append(Error.PASSWORD_MISMATCH)
-    token = database.get_field_by_name(Account, Account.TOKEN, data[Account.NAME])
-    return json_payload({"message": "Account created", Account.TOKEN:  token})
+
+    # update_keys = set(Account.COLUMNS).intersection(body.keys())
+
+    if len(error) == 0:
+        database.update_fields(Account,
+                               (Account.NAME, body[Account.NAME]),
+                               [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))")])
+        token = database.get_field_by_name(Account, Account.TOKEN, body[Account.NAME])
+        return json_payload({"message": "Signed in to Account", Account.TOKEN:  token})
+    return json_payload(None, error)
 
 
 @api.handle("/account", httpMethod="POST")
@@ -469,15 +480,14 @@ def saving_policy_hardware_request(event, pathPara, queryPara):
 
 if __name__ == "__main__":
     import urllib
-    d = "ew0KICAgICJ1c2VybmFtZSI6ICJ1c2VybmFtZSINCn0="
-    # d = "LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTk1NjQwNjEwNjMyNjkxNTMxMDUwMDUyNw0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ1c2VybmFtZSINCg0KdXNlcm5hbWUNCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS05NTY0MDYxMDYzMjY5MTUzMTA1MDA1MjctLQ0K"
-    # d = base64.b64encode(json.dumps({"a":"aa", "b": "bb"}).encode("utf-8")).decode('utf-8')
-    print(d)
-    dec = base64.b64decode(d).decode('utf-8')
-    print(dec)
-    # da = json.loads(d)
-    print(json.loads(dec))
-    print(json.loads("{\r\n    \"username\": \"username\",\r\n    \"password\": \"password\",\r\n    \"email\": \"email\",\r\n    \"list\": [\"item1\", \"item2\"]\r\n}"))
-    # e = base64.b64encode(da)
+    event = {
+        "resource": "/account/signin",
+        "httpMethod": "POST",
+        "body": """{
+            "username": "username1",
+            "password": "password",
+            "email": "default@temple.edu"
+        }"""
+    }
 
-    print(is_valid("fes7713@yahoo.co.jp"))
+    print(lambda_handler(event, None))

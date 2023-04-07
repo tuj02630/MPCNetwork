@@ -118,7 +118,7 @@ class MPCDatabase:
             raise err
         return
 
-    def update(self, table_class, condition_item: MatchItem, update_list: [MatchItem]):
+    def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
         script = self.gen_update_script(table_class.__name__, condition_item, update_list)
         if "update" not in script.lower():
             raise TypeError("Update should only be Update")
@@ -308,6 +308,10 @@ class MPCDatabase:
                                 join_table_class.__dict__[join_field])])["data"]
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
+
+    def update_fields(self, table_class, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
+        self.update(table_class, MatchItem(condition_tuple[0], condition_tuple[1]),
+                    [MatchItem(item[0], item[1]) for item in update_list])
 
     def delete_all_accounts(self):
 
