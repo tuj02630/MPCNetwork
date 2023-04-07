@@ -132,7 +132,8 @@ def delete_by_hardware_id(table_class, pathPara):
 def update_by_id(table_class, pathPara, queryPara):
     id = pathPara["id"]
     update_keys = set(table_class.COLUMNS).intersection(queryPara.keys())
-    update_keys.remove(table_class.ID)
+    if table_class.ID in update_keys:
+        update_keys.remove(table_class.ID)
     database.update_fields(table_class, (table_class.ID, id), [(key, queryPara[key]) for key in update_keys])
 
     return json_payload({})
@@ -550,11 +551,11 @@ def saving_policy_hardware_delete_by_id(event, pathPara, queryPara):
 
 if __name__ == "__main__":
     import urllib
-    database.insert(Hardware("TestDevice", "720p"), ignore=True)
-    max = database.get_max_id(Hardware)
+    # database.insert(Notification(10000, criteria_id=3), ignore=True)
+    max = database.get_max_id(Notification)
     event = {
-        "resource": "/hardware/{id}",
-        "httpMethod": "DELETE",
+        "resource": "/notification/{id}",
+        "httpMethod": "PUT",
         "body": """{
             "username": "username1",
             "password": "password",
@@ -562,6 +563,9 @@ if __name__ == "__main__":
         }""",
         "pathParameters": {
             "id": max
+        },
+        "queryStringParameters": {
+            "notification_type": 10
         }
     }
 

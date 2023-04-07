@@ -2,7 +2,6 @@ import sys
 from typing import Match
 
 import mysql.connector
-from matplotlib.table import table
 
 try:
     from Database.Data.Account import Account
@@ -118,6 +117,8 @@ class MPCDatabase:
         return
 
     def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
+        if len(update_list) == 0:
+            return
         script = self.gen_update_script(table_class.__name__, condition_item, update_list)
         if "update" not in script.lower():
             raise TypeError("Update should only be Update")
