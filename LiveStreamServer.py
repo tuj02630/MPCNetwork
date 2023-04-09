@@ -1,8 +1,6 @@
 import socket
 import threading
-import numpy
 import DeviceConnection
-
 
 class LiveStreamServer:
     """
@@ -61,6 +59,7 @@ class LiveStreamServer:
                         found = True
                         print("\tRerouting old DeviceConnection with ID: " +str(dc.get_device_id()))
                         dc.reroute(addr)
+                        connection_socket.sendto(bytes(str(dc.get_curr_port()), 'utf-8'), addr)
                         break
                 if not found:
                     curr_dc = DeviceConnection.DeviceConnection(addr, data[1:], curr_port)
@@ -71,7 +70,7 @@ class LiveStreamServer:
                             curr_port+=2
                             curr_dc.add_receiver(receiver[1], curr_port)
                             print("\t\tSending packet to: " +str(addr))
-                            connection_socket.sendto(bytes(str(curr_port), 'utf-8'), addr)
+                            connection_socket.sendto(bytes(str(curr_port), 'utf-8'), receiver[1])
                             self.receiver_backlog.remove(receiver)
                     curr_port += 2
             elif data[0] == 'R':
@@ -88,11 +87,11 @@ class LiveStreamServer:
                         break
                 if not found:
                     print("\tDevice ID not found. Adding to waitlist...")
-                    connection_socket.sendto(b'WAIT', addr)
-                    self.receiver_backlog.append((data[1:],(addr[0], curr_port)))
+                    connection_socket.sendto(b'CWAIT', addr)
+                    self.receiver_backlog.append((data[1:], addr))
             else:
                 print("Data: " + data)
                 print("Unrecognized connection attempt. Format should be '[DEVICE_TYPE_CHAR][DEVICE_ID] encoded in utf-8'")
 
 
-ms = LiveStreamServer(9999)
+lss = LiveStreamServer(9999)

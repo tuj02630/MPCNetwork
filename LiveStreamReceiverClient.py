@@ -67,6 +67,10 @@ class LiveStreamReceiverClient:
         self.c_sock.settimeout(15)
         self.c_sock.sendto(bytes(message, 'utf-8'), (self.HOST, self.PORT))
         response, addr = self.c_sock.recvfrom(self.BUFF_SIZE)
+        response_str = response.decode('utf-8')
+        if response_str == "CWAIT":
+            print("Received " + response_str + " instruction. Waiting...")
+            response, addr = self.c_sock.recvfrom(self.BUFF_SIZE)
         port_args = int(response.decode('utf-8'))
         print("Received server port: " + str(port_args))
         time.sleep(0.5)

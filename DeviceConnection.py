@@ -1,9 +1,11 @@
 import socket
 import threading
 
-
-
 class DeviceConnection:
+    """
+    A DeviceConnection is created for each sender client
+    DeviceConnections maintain existing sender connections and are responsible for routing packets from a sender to zero or more receivers
+    """
     def video_sending_handler(self):
         """
             Function for handling a video sender's packets and routing them to video receievers
@@ -20,7 +22,9 @@ class DeviceConnection:
 
         # start connection
         self.sv_socket.bind(((self.HOST, self.curr_port)))
-        while not self.shutoff:
+        while True:
+            if self.shutoff:
+                return
             packet, sv_addr = self.sv_socket.recvfrom(self.BUFF_SIZE)
             # print("Packet length: " + str(len(packet)))
             if self.DEBUG:
@@ -31,7 +35,6 @@ class DeviceConnection:
                 # print("SENDING PACKET IN SOCKET: " + str(sock) + ", TO " + str(self.v_socket_array[i]))
                 sock.sendto(packet, (self.v_socket_array[i]))
                 i+= 1
-        return
 
     def audio_sending_handler(self):
         """
@@ -48,7 +51,9 @@ class DeviceConnection:
         # start connection
         self.sa_socket.bind((self.HOST, self.curr_port + 1))
 
-        while not self.shutoff:
+        while True:
+            if self.shutoff:
+                return
             packet, sa_addr = self.sa_socket.recvfrom(self.BUFF_SIZE)
             # send packet to all ra ips here
             i = 0
@@ -56,7 +61,6 @@ class DeviceConnection:
                 # print("sending packet to " + str(self.a_socket_array[i]))
                 sock.sendto(packet, self.a_socket_array[i])
                 i+=1
-        return
 
     def add_receiver(self, ip:str, port:int):
         """
@@ -136,16 +140,12 @@ class DeviceConnection:
         """Private ip for the server"""
         self.DEBUG = False
         """Debugging backend option"""
-        self.thread_array = []
-        """Array of threads"""
         self.device_id = device_id
         """String containing sending device's ID"""
         self.s_addr = s_addr
         """Tuple containing the IP and Port of the sending device"""
         self.curr_port = curr_port  # video port, audio port is + 1
         """Tuple containing the IP and Port of the sending device"""
-        self.thread_array = []
-        """Array of threads"""
         self.v_socket_array:tuple = []
         """Array of IP/Port Tuples to send video to"""
         self.a_socket_array:tuple = []
@@ -186,11 +186,11 @@ class DeviceConnection:
             None
         """
         print("\t" + self.device_id + ": Shutting down threads...")
-        self.sv_socket.close()
-        self.sa_socket.close()
         self.shutoff = True
         self.vid_thread.join()
         self.aud_thread.join()
+        self.sv_socket.close()
+        self.sa_socket.close()
         print("\t" + self.device_id + ": Threads have been shut down. Restarting...")
         self.s_addr = s_addr
         self.vid_thread = threading.Thread(target=self.video_sending_handler)
@@ -198,6 +198,8 @@ class DeviceConnection:
         self.vid_thread.start()
         self.aud_thread.start()
 
+    def get_curr_port(self):
+        return self.curr_port
 
     def destroy(self):
         """
