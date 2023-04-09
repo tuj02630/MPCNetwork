@@ -62,7 +62,7 @@ class MPCDatabase:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
 
-    def insert(self, object_instance, ignore: bool = False):
+    def insert(self, object_instance: object, ignore: bool = False):
         """
             Perform insert into database
 
@@ -90,7 +90,7 @@ class MPCDatabase:
             raise err
         return
 
-    def truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False):
+    def truncate(self, table_class: type, foreign_key_check: bool = True, auto_increment_reset: bool = False):
         script = "TRUNCATE " + table_class.__name__ + ";"
         try:
             with self.connection.cursor() as cur:
@@ -116,7 +116,7 @@ class MPCDatabase:
             raise err
         return
 
-    def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
+    def update(self, table_class: type, condition_item: MatchItem, update_list: list[MatchItem]):
         if len(update_list) == 0:
             return
         script = self.gen_update_script(table_class.__name__, condition_item, update_list)
@@ -132,7 +132,7 @@ class MPCDatabase:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
 
-    def delete(self, table_class, condition_item: MatchItem):
+    def delete(self, table_class: type, condition_item: MatchItem):
         script = f"Delete From {table_class.__name__} Where {condition_item.key} = {condition_item.value}"
         if "delete" not in script.lower():
             raise TypeError("Delete should only be delete")
@@ -180,34 +180,34 @@ class MPCDatabase:
 
         return payload
 
-    def verify_field(self, table_class, field: str, value: str):
+    def verify_field(self, table_class: type, field: str, value: str):
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(field, value)])
         return len(entries["data"]) == 1
 
-    def verify_fields(self, table_class, field_value_list: list[tuple]):
+    def verify_fields(self, table_class: type, field_value_list: list[tuple]):
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(item[0], item[1]) for item in field_value_list])
         return len(entries["data"]) == 1
 
-    def verify_id(self, table_class, id: int) -> bool:
+    def verify_id(self, table_class: type, id: int) -> bool:
         return self.verify_field(table_class, table_class.ID, str(id))
 
-    def verify_name(self, table_class, name: str) -> bool:
+    def verify_name(self, table_class: type, name: str) -> bool:
         return self.verify_field(table_class, table_class.NAME, name)
 
-    def get_all(self, table_class) -> list:
+    def get_all(self, table_class: type) -> list:
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS)
         return table_class.list_dict_to_object_list(payload["data"])
 
-    def get_field_by_name(self, table_class, field: str, name: str):
+    def get_field_by_name(self, table_class: type, field: str, name: str):
         entries = self.select_payload(table_class.TABLE, [field],
                                       match_list=[MatchItem(table_class.NAME, name)])
         if len(entries["data"]) == 0:
             return None
         return entries["data"][0][field]
 
-    def get_by_name(self, table_class, name: str):
+    def get_by_name(self, table_class: type, name: str):
         """
             Execute query to get the account information related to the given id
 
@@ -223,30 +223,30 @@ class MPCDatabase:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_by_id(self, table_class, id: int):
+    def get_by_id(self, table_class: type, id: int):
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])["data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_id_by_name(self, table_class, name: str) -> int:
+    def get_id_by_name(self, table_class: type, name: str) -> int:
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.NAME, name)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
-    def get_max_id(self, table_class):
+    def get_max_id(self, table_class: type):
         payload = self.select_payload(table_class.TABLE, [f"max({table_class.ID})"])["data"]
         if len(payload) == 0:
             return None
         return payload[0][f"max({table_class.ID})"]
 
-    def get_all_by_account_id(self, table_class, account_id: int) -> list:
+    def get_all_by_account_id(self, table_class: type, account_id: int) -> list:
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.ACCOUNT_ID, account_id)])["data"]
         return table_class.list_dict_to_object_list(payload)
 
-    def get_all_by_account_name(self, table_class, account_name: str) -> list:
+    def get_all_by_account_name(self, table_class: type, account_name: str) -> list:
         payload = self.select_payload(
             table_class.TABLE, table_class.EXPLICIT_COLUMNS,
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -254,11 +254,11 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
-    def get_ids_by_account_id(self, table_class, account_id) -> list[int]:
+    def get_ids_by_account_id(self, table_class: type, account_id) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.ACCOUNT_ID, account_id)])
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_ids_by_account_name(self, table_class, account_name: str):
+    def get_ids_by_account_name(self, table_class: type, account_name: str):
         payload = self.select_payload(
             table_class.TABLE, [table_class.ID],
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -267,13 +267,13 @@ class MPCDatabase:
 
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_all_by_hardware_id(self, table_class,  hardware_id: int):
+    def get_all_by_hardware_id(self, table_class: type,  hardware_id: int):
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.HARDWARE_ID, hardware_id)])["data"]
 
         return table_class.list_dict_to_object_list(payload)
 
-    def get_all_by_account_id_hardware_id(self, table_class, account_id: int, hardware_id: int):
+    def get_all_by_account_id_hardware_id(self, table_class: type, account_id: int, hardware_id: int):
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[
                                           MatchItem(table_class.ACCOUNT_ID, account_id),
@@ -281,36 +281,36 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload)
 
-    def get_by_type(self, table_class, type: int):
+    def get_by_type(self, table_class: type, type: int):
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
             "data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_id_by_type(self, table_class, type: int) -> id:
+    def get_id_by_type(self, table_class: type, type: int) -> id:
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.TYPE, type)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
-    def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
+    def get_saving_policy_ids_by_hardware_id(self, table_class: type, hardware_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int) -> list[int]:
+    def get_hardware_ids_by_saving_policy_id(self, table_class: type, saving_policy_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
-    def get_notification_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
+    def get_notification_ids_by_hardware_id(self, table_class: type, hardware_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.NOTIFICATION_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_notification_id(self, table_class, notification_id: int) -> list[int]:
+    def get_hardware_ids_by_notification_id(self, table_class: type, notification_id: int) -> list[int]:
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
-    def get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int):
+    def get_all_by_join_id(self, table_class: type, join_table_class, join_field: str, match_field: str, match_id: int):
         match_id = int(match_id)
         if join_field[:len("EXPLICIT")] != "EXPLICIT":
             raise ValueError("join_field should be explicit name")
@@ -322,11 +322,11 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
-    def update_fields(self, table_class, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
+    def update_fields(self, table_class: type, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
         self.update(table_class, MatchItem(condition_tuple[0], condition_tuple[1]),
                     [MatchItem(item[0], item[1]) for item in update_list])
 
-    def delete_by_field(self, table_class, condition_field: tuple[str, str]):
+    def delete_by_field(self, table_class: type, condition_field: tuple[str, str]):
         self.delete(table_class, MatchItem(condition_field[0], condition_field[1]))
 
 

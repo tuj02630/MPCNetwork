@@ -43,7 +43,7 @@ class Criteria(Data):
     
     """Returns the explicit version of the variables"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Criteria":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Criteria":
         if explicit:
             return Criteria(payload[Criteria.EXPLICIT_TYPE], payload[Criteria.EXPLICIT_MAGNITUDE],
                             payload[Criteria.EXPLICIT_DURATION], payload[Criteria.EXPLICIT_ID])

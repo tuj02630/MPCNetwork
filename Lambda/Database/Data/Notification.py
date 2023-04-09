@@ -38,7 +38,7 @@ class Notification(Data):
 
     """Determines if explicit is true, if so then return the explicit variables, if not then return the normal ones"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Notification":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Notification":
         if explicit:
             return Notification(payload[Notification.EXPLICIT_TYPE],
                                 payload[Notification.EXPLICIT_CRITERIA_ID], payload[Notification.EXPLICIT_ID])

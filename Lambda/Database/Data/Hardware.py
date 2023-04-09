@@ -5,7 +5,7 @@ except:
 
 
 class Hardware(Data):
-    TABLE = "Hardware"
+    TABLE: str = "Hardware"
     NAME = "name"
     ID = "hardware_id"
     ACCOUNT_ID = "account_id"

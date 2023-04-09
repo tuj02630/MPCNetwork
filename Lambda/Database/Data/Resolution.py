@@ -37,7 +37,7 @@ class Resolution(Data):
 
     """Determines if explicit is true, if true then return the explicit variables, if not then return the normal ones"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Resolution":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Resolution":
         if explicit:
             return Resolution(payload[Resolution.EXPLICIT_NAME], payload[Resolution.EXPLICIT_WIDTH], payload[Resolution.EXPLICIT_HEIGHT])
         else:

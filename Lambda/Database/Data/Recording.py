@@ -23,9 +23,7 @@ class Recording(Data):
         EXPLICIT_FILE_NAME, EXPLICIT_DATE, EXPLICIT_TIMESTAMP, EXPLICIT_ID, EXPLICIT_ACCOUNT_ID, EXPLICIT_HARDWARE_ID
     ]
 
-    def __init__(self,
-                 file_name: str, date: str, timestamp: str,
-                 recording_id: int = None, account_id: int = None, hardware_id: int = None):
+    def __init__(self, file_name: str, date: str, timestamp: str, recording_id: int = None, account_id: int = None, hardware_id: int = None):
         self.file_name = file_name
         self.date = date
         self.timestamp = timestamp
@@ -38,7 +36,7 @@ class Recording(Data):
                "ACCOUNT_ID: {:<8} HARDWARE_ID: {:<8}".format(self.file_name, self.date, self.timestamp,
                                                               self.recording_id, self.account_id, self.hardware_id)
 
-    def add_date_timestamp_from_query_para(self, queryPara):
+    def add_date_timestamp_from_query_para(self, queryPara: dict):
         year, month, date, hour, minute, second = (1990, 1, 1, 0, 0, 0)
         if "year" in queryPara:
             year = queryPara["year"]
@@ -68,7 +66,7 @@ class Recording(Data):
             self.timestamp = "NOW()"
 
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Recording":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Recording":
         if explicit:
             return Recording(
                 str(payload[Recording.EXPLICIT_FILE_NAME]),

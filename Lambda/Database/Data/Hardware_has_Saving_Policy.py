@@ -32,7 +32,7 @@ class Hardware_has_Saving_Policy(Data):
 
     """Determines if the explicit variable is true, if so then return the explicit variables, if not return the normal version"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Hardware_has_Saving_Policy":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Hardware_has_Saving_Policy":
         if explicit:
             return Hardware_has_Saving_Policy(
                 payload[Hardware_has_Saving_Policy.EXPLICIT_HARDWARE_ID],

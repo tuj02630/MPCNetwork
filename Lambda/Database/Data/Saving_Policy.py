@@ -37,7 +37,7 @@ class Saving_Policy(Data):
 
     """Determines if explicit is true, if so then return the explicit variables, if not return the normal ones"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Saving_Policy":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Saving_Policy":
         if explicit:
             return Saving_Policy(payload[Saving_Policy.EXPLICIT_MAX_TIME], payload[Saving_Policy.EXPLICIT_RESOLUTION_NAME], payload[Saving_Policy.EXPLICIT_ID])
         else:

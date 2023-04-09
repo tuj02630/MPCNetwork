@@ -15,12 +15,12 @@ class Data:
         return [Data.object_to_dict(obj) for obj in list_object]
 
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Data":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Data":
         raise NotImplemented("Not implemented")
 
     """Loops through the new data and appends it to the existing data"""
     @classmethod
-    def list_dict_to_object_list(cls, data_list: list[dict], explicit=False) -> list[dict]:
+    def list_dict_to_object_list(cls, data_list: list[dict], explicit: bool = False) -> list[dict]:
         data = []
         for d in data_list:
             data.append(cls.dict_to_object(d, explicit))

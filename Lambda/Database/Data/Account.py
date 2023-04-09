@@ -41,7 +41,7 @@ class Account(Data):
             .format(self.username, self.password, self.email, self.status, self.token, self.timestamp, self.account_id)
 
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Account":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Account":
         if explicit:
             return Account(payload[Account.EXPLICIT_NAME], payload[Account.EXPLICIT_PASSWORD],
                            payload[Account.EXPLICIT_EMAIL], payload[Account.EXPLICIT_STATUS],

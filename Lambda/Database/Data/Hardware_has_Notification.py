@@ -32,7 +32,7 @@ class Hardware_has_Notification(Data):
 
     """If explicit is true, then return the explicit versio of the variables, if not, return the other version"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit=False) -> "Hardware_has_Notification":
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Hardware_has_Notification":
         if explicit:
             return Hardware_has_Notification(
                 payload[Hardware_has_Notification.EXPLICIT_HARDWARE_ID],
