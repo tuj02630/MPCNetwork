@@ -5,6 +5,7 @@ except:
 
 
 class Criteria(Data):
+
     TABLE = "Criteria"
     MAGNITUDE = "magnitude"
     DURATION = "duration"

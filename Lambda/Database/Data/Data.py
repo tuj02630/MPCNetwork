@@ -1,5 +1,6 @@
 import inspect
 
+
 class Data:
     @staticmethod
     def object_to_dict(object: object) -> dict:
@@ -9,7 +10,7 @@ class Data:
             return object.__dict__
 
     @staticmethod
-    def list_object_to_dict_list(list_object: list[object]) -> list:
+    def list_object_to_dict_list(list_object: list[object]) -> list[dict]:
         return [Data.object_to_dict(obj) for obj in list_object]
 
     @staticmethod
