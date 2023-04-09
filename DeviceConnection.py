@@ -1,92 +1,221 @@
 import socket
 import threading
-import numpy
 
-BUFF_SIZE = 65536
-dtype = numpy.uint8
 
-HOST = '172.31.12.186'
-v_port = 9998
-a_port = 9999
-
-DEBUG = False
 
 class DeviceConnection:
-    thread_array = []
-    device_id: str = ""
-    s_addr: tuple = ('', 0)
-    curr_port: int  # video port, audio port is + 1
-    thread_array = []
-    socket_array:tuple = []
-    receiver_array: socket.socket = []  #
-    sv_socket: socket.socket
-    sa_socket: socket.socket
-    sv_addr: tuple = ('', 0)
-    sa_addr: tuple = ('', 0)
-
-    vid_thread: threading.Thread
-    aud_thread: threading.Thread
-
     def video_sending_handler(self):
+        """
+            Function for handling a video sender's packets and routing them to video receievers
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
         self.sv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+        self.sv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
         # self.sv_socket.bind((local_ip, self.curr_port))
 
         # start connection
-        self.sv_socket.bind(((HOST, self.curr_port)))
-        while True:
-            packet, _ = self.sv_socket.recvfrom(BUFF_SIZE)
-            if DEBUG:
+        self.sv_socket.bind(((self.HOST, self.curr_port)))
+        while not self.shutoff:
+            packet, sv_addr = self.sv_socket.recvfrom(self.BUFF_SIZE)
+            # print("Packet length: " + str(len(packet)))
+            if self.DEBUG:
                 print("\nReceiving Video: " + str(packet))
             # send packet to all rv ips here
             i = 0
-            for sock in self.receiver_array:
-                sock.sendto(packet, self.socket_array[i])
-                i+=1
+            for sock in self.v_receiver_array:
+                # print("SENDING PACKET IN SOCKET: " + str(sock) + ", TO " + str(self.v_socket_array[i]))
+                sock.sendto(packet, (self.v_socket_array[i]))
+                i+= 1
         return
 
     def audio_sending_handler(self):
-        s_ip, s_port = self.s_addr
-        self.sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        # start connection
-        self.sa_socket.bind((HOST, self.curr_port + 1))
+        """
+            Function for handling an audio sender's packets and routing them to audio receievers
 
-        while True:
-            packet, _ = self.sa_socket.recvfrom(BUFF_SIZE)
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
+        self.sa_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sa_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        # start connection
+        self.sa_socket.bind((self.HOST, self.curr_port + 1))
+
+        while not self.shutoff:
+            packet, sa_addr = self.sa_socket.recvfrom(self.BUFF_SIZE)
             # send packet to all ra ips here
             i = 0
-            for sock in self.receiver_array:
-                sock.sendto(packet, self.socket_array[i])
+            for sock in self.a_receiver_array:
+                # print("sending packet to " + str(self.a_socket_array[i]))
+                sock.sendto(packet, self.a_socket_array[i])
                 i+=1
         return
 
     def add_receiver(self, ip:str, port:int):
-        print("\tOpening new socket with port: "+str(port))
-        r_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        r_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        r_socket.bind((HOST, port))
-        threading.Thread(target=self.start_receiver_socket, args=r_socket).start()
-        self.socket_array.append((ip, port))
-        self.receiver_array.append(r_socket)
+        """
+            Function for adding a receiver to an existing DeviceConnection
 
-    def start_receiver_socket(self, r_socket:socket.socket):
-        r_socket.recv(BUFF_SIZE)
+            Parameters:
+            ip: Target receiver's IP address in string format
+            port: Target receiver's port as an integer
+
+
+            Returns:
+            None
+        """
+        print("\tOpening two new sockets with ports: " + str(port) + " and " +str(port + 1))
+        rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        rv_socket.bind((self.HOST, port))
+        ra_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ra_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
+        ra_socket.bind((self.HOST, (port + 1)))
+        threading.Thread(target=self.start_v_receiver_socket, args=(rv_socket,)).start()
+        threading.Thread(target=self.start_a_receiver_socket, args=(ra_socket,)).start()
+        
+
+    def start_v_receiver_socket(self, v_socket:socket.socket):
+        """
+            Helper function for add_receiver, waits for a receiver to send a packet to confirm starting the video connection
+
+            Parameters:
+            v_socket: The socket to listen for the receiver's packet on
+
+
+            Returns:
+            None
+        """
+        data, addr = v_socket.recvfrom(self.BUFF_SIZE)
+        print("Socket: " + str(v_socket.getsockname()) + " received message: " + data.decode('utf-8'))
+        self.v_socket_array.append(addr)
+        self.v_receiver_array.append(v_socket)
+        # print("There are now " + str(len(self.v_socket_array)) + " addresses in the socket array")
+        return
+    
+    def start_a_receiver_socket(self, a_socket:socket.socket):
+        """
+            Helper function for add_receiver, waits for a receiver to send a packet to confirm starting the audio connection
+
+            Parameters:
+            a_socket: The socket to listen for the receiver's packet on
+
+
+            Returns:
+            None
+        """
+        data, addr = a_socket.recvfrom(self.BUFF_SIZE)
+        print("Socket: " + str(a_socket.getsockname()) + " received message: " + data.decode('utf-8'))
+        self.a_socket_array.append(addr)
+        self.a_receiver_array.append(a_socket)
         return
 
-    def set_sender_socket(self, ss: tuple):
-        self.s_addr
 
     def get_device_id(self):
+        """
+            Simple getter for device_id
+
+            Parameters:
+            None
+
+            Returns:
+            device_id: string
+        """
         return self.device_id
 
     def __init__(self, s_addr: tuple, device_id: str, curr_port: int):
-        self.s_addr = s_addr
+        self.BUFF_SIZE = 65536
+        """Data buffer size for the video and audio stream"""
+        self.HOST = '172.31.12.186'
+        """Private ip for the server"""
+        self.DEBUG = False
+        """Debugging backend option"""
+        self.thread_array = []
+        """Array of threads"""
         self.device_id = device_id
-        self.curr_port = curr_port
+        """String containing sending device's ID"""
+        self.s_addr = s_addr
+        """Tuple containing the IP and Port of the sending device"""
+        self.curr_port = curr_port  # video port, audio port is + 1
+        """Tuple containing the IP and Port of the sending device"""
+        self.thread_array = []
+        """Array of threads"""
+        self.v_socket_array:tuple = []
+        """Array of IP/Port Tuples to send video to"""
+        self.a_socket_array:tuple = []
+        """Array of IP/Port Tuples to send audio to"""
+        self.v_receiver_array: socket.socket = []  #
+        """Array of sockets to send video data to the respective v_socket_array address"""
+        self.a_receiver_array: socket.socket = []  #
+        """Array of sockets to send audio data to the respective a_socket_array address"""
+        self.sv_socket: socket.socket
+        """Socket for receiving video from sender"""
+        self.sa_socket: socket.socket
+        """Socket for receiving audio from sender"""
+        self.sv_addr: tuple = ('', 0)
+        """Tuple for storing address of video sender"""
+        self.sa_addr: tuple = ('', 0)
+        """Tuple for storing address of audio sender"""
+        self.shutoff = False
+        """Boolean to shut off threads"""
+        self.vid_thread: threading.Thread
+        """Thread for handling video packets"""
+        self.aud_thread: threading.Thread
+        """Thread for handling audio packets"""
         print(
             "\t\tCreated new DeviceConnection with Device ID: " + self.device_id + " and address: " + str(self.s_addr))
         self.vid_thread = threading.Thread(target=self.video_sending_handler)
         self.aud_thread = threading.Thread(target=self.audio_sending_handler)
         self.vid_thread.start()
         self.aud_thread.start()
+
+    def reroute(self, s_addr: tuple):
+        """
+            A function for changing an existing DeviceConnection's sender variables to a new sender without interrupting the connection for receivers
+
+            Parameters:
+            s_addr: The new address to receive packets from
+
+            Returns:
+            None
+        """
+        print("\t" + self.device_id + ": Shutting down threads...")
+        self.sv_socket.close()
+        self.sa_socket.close()
+        self.shutoff = True
+        self.vid_thread.join()
+        self.aud_thread.join()
+        print("\t" + self.device_id + ": Threads have been shut down. Restarting...")
+        self.s_addr = s_addr
+        self.vid_thread = threading.Thread(target=self.video_sending_handler)
+        self.aud_thread = threading.Thread(target=self.audio_sending_handler)
+        self.vid_thread.start()
+        self.aud_thread.start()
+
+
+    def destroy(self):
+        """
+            A function for killing a DeviceConnection object.
+
+            Parameters:
+            None
+
+            Returns:
+            None
+        """
+        self.shutoff = True
+        self.vid_thread.join()
+        self.vid_thread.join()
+        self.sv_socket.close()
+        self.sa_socket.close()
+        for sock in self.v_receiver_array:
+            sock.close()
+        for sock in self.a_receiver_array:
+            sock.close()
+    
