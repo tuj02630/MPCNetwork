@@ -9,10 +9,19 @@ except:
     from Lambda.Database.Data.Account import Account
 
 class MatchItem:
+    """
+        This class aims to help create the sql scrip in Python by providing the layer of abstraction
+         and the class will be mainly used in MPCdatabase.
+        MatchItem class takes the key and value items so that MPCdatabase can construct proper sql script
+        in WHERE clause to define the conditions.
+    """
     def __init__(self, key: str, value, table: str = None):
         """Initializes the key and table variables"""
         self.key = key
+        "key that is used to be matched with value"
         self.value = f"'{value}'" if type(value) is str and value[-1:] != ")" else f"{str(value)}"
+        "Value that is used to check the match"
+
 
 class JoinItem:
     INNER = "Inner"
@@ -21,11 +30,23 @@ class JoinItem:
     Right = "Right"
 
     def __init__(self, join_type: str, join_table: str, join_field1: str, join_field2: str):
-        """Initializes the join type, join table, join field 1, and join field 2 variables"""
+        """
+            This class aims to help create the sql scrip in Python by providing the layer of abstraction
+             and the class will be mainly used in MPCdatabase.
+            JoinItem class takes the JoinType from Inner Full, Left and Right so that user can specify the
+            proper type of joining two tables.
+            The join table will be joined to the table that will be passed in the MPCdatabase based
+            on the given join fields
+        """
         self.join_type = join_type
+        """Join that used to join two tables"""
         self.join_table = join_table
+        """Name of table that is to be joined"""
         self.join_field1 = join_field1
+        """Name of variable that is used for the "Join On" clause"""
         self.join_field2 = join_field2
+        """Name of variable that is used for the "Join On" clause"""
+
 
 class MPCDatabase:
     def __init__(self):
@@ -34,6 +55,8 @@ class MPCDatabase:
                                                   user='admin',
                                                   password='1234567890',
                                                   database="mydb2")
+        """Reference for my sql instance. Used to perform query in database"""
+
         print("Connected")
 
     def close(self):
@@ -91,7 +114,19 @@ class MPCDatabase:
         return
 
     def truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False):
-        """Truncates the information in the database"""
+        """
+            Truncates the information in the table
+
+            Parameters:
+
+                >table_class            : class<: Class that represents the DB table that is to be truncated
+                >foreign_key_check      : bool< : Flag variable to disable the foreign_key_check
+                >auto_increment_reset   : bool< : Flag variable to reset the auto_increment_reset
+
+
+            Returns:
+            None
+        """
         script = "TRUNCATE " + table_class.__name__ + ";"
         try:
             with self.connection.cursor() as cur:
@@ -118,7 +153,19 @@ class MPCDatabase:
         return
 
     def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
-        """Updates the information in the database"""
+        """
+            Updates the information in the table
+
+            Parameters:
+
+                >table_class    : class<            : Class that represents the DB table that is to be updated
+                >condition_item : MatchItem<        : Match item that is used to find the DB record in the table
+                >update_list    : list[MatchItem]<  : List of pairs of key-value items that will be updated
+
+
+            Returns:
+            None
+        """
         if len(update_list) == 0:
             return
         script = self.gen_update_script(table_class.__name__, condition_item, update_list)
@@ -135,7 +182,17 @@ class MPCDatabase:
             raise err
 
     def delete(self, table_class, condition_item: MatchItem):
-        """Deletes specified information in the database"""
+        """
+           Deletes the information in the table
+
+           Parameters:
+
+               >table_class    : class<            : Class that represents the DB table that is to be updated
+               >condition_item : MatchItem<        : Match item that is used to find the DB record in the table
+
+           Returns:
+           None
+       """
         script = f"Delete From {table_class.__name__} Where {condition_item.key} = {condition_item.value}"
         if "delete" not in script.lower():
             raise TypeError("Delete should only be delete")
@@ -150,7 +207,18 @@ class MPCDatabase:
             raise err
 
     def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
-        """Generates sql scripts and queries to specify information based on certain constraints"""
+        """
+           Generates sql scripts and queries to specify information based on certain constraints"
+
+           Parameters:
+
+               >table_class : class<        : Class that represents the DB table that is to be updated
+               >match_list  : MatchItem<    : Match item that is used to find the DB record in the table
+               >join_list   : JoinItem<     : Join item that is used to join the several table into one table
+
+           Returns:
+               >string<     :   SQL script generated based on the parameters
+       """
         join_clause = "".join(
                    [" {} Join {} On {} = {}".format(item.join_type, item.join_table, item.join_field1, item.join_field2)
                         for item in join_list]
@@ -164,7 +232,21 @@ class MPCDatabase:
                where_clause
 
     def gen_insert_script(self, table_name: str, keys: list, values: list, ignore: bool) -> str:
-        """Creates an sql insert statement for adding rows to the database"""
+
+        """
+           Creates a sql insert statement for adding rows to the database
+
+           Parameters:
+
+               >table_class : class<        : Class that represents the DB table that is to be updated
+               >keys        : list[string]< : Keys  used to define the insert columns keys
+               >values      : list[string]< : Value used to define the insert values for columns keys
+               >ignore      : bool<         : Flag to ignore insert if there is a record of
+               the same primary key in the table already
+
+           Returns:
+               >string<     :   SQL script generated based on the parameters
+       """
         return "Insert " + \
                ("Ignore" if ignore else "") + \
                " Into " + table_name + \
@@ -177,7 +259,18 @@ class MPCDatabase:
                 " Where " + f"{condition_item.key} = {condition_item.value}"
 
     def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> dict:
-        """Assembles query to be sent to database"""
+        """
+           Formats the result of query to dictionary format.
+
+           Parameters:
+
+               >table_class : class<        : Class that represents the DB table that is to be updated
+               >match_list  : MatchItem<    : Match item that is used to find the DB record in the table
+               >join_list   : JoinItem<     : Join item that is used to join the several table into one table
+
+           Returns:
+               >dict<       : Formatted dict response from DB
+       """
         script = self.gen_select_script(table_name, columns, match_list, join_list)
         result = self.query(script)
         data = []
@@ -188,13 +281,35 @@ class MPCDatabase:
         return payload
 
     def verify_field(self, table_class, field: str, value: str):
-        """verifies values to make sure the correct field is being used"""
+        """
+           verifies values to see if the value for the table column exists in the given table
+
+           Parameters:
+
+               >table_class : class<    : Class that represents the DB table that is to be updated
+               >field       : bool      : Field that is to be verified
+               >value       : bool      : Value that is to be used to see the match with field
+
+           Returns:
+               >bool<       : True if the record with given field exists with value in the table
+       """
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(field, value)])
         return len(entries["data"]) == 1
 
     def verify_fields(self, table_class, field_value_list: list[tuple]):
-        """Verifies multiple fields"""
+        """
+           Verifies multiple fields
+
+           Parameters:
+
+               >table_class         : class<       : Class that represents the DB table that is to be updated
+               >field_value_list    : list[tuple]  : Field that is to be verified
+
+           Returns:
+               >bool<       : True if the record with given field exists with value in the table
+       """
+
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(item[0], item[1]) for item in field_value_list])
         return len(entries["data"]) == 1
