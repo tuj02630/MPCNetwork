@@ -304,7 +304,7 @@ class MPCDatabase:
            Parameters:
 
                >table_class         : class<       : Class that represents the DB table that is to be updated
-               >field_value_list    : list[tuple]  : Field that is to be verified
+               >field_value_list    : list[tuple]  : List of pairs of field and value that will be checked to be matched
 
            Returns:
                >bool<       : True if the record with given field exists with value in the table
@@ -315,15 +315,44 @@ class MPCDatabase:
         return len(entries["data"]) == 1
 
     def verify_id(self, table_class, id: int) -> bool:
-        """uses verify_field function to verify the id"""
+        """
+           verify_field function to verify the id
+
+           Parameters:
+
+               >table_class : class<    : Class that represents the DB table that is to be updated
+               >id          : int       : ID that should exist in the table
+
+           Returns:
+               >bool<       : True if there is a record with ID given
+       """
         return self.verify_field(table_class, table_class.ID, str(id))
 
     def verify_name(self, table_class, name: str) -> bool:
-        """Uses the verify_field function to verify the name"""
+        """
+            verify_field function to verify the name
+
+               Parameters:
+
+                   >table_class : class<    : Class that represents the DB table that is to be updated
+                   >name        : string    : Name that should exist in the table
+
+               Returns:
+                   >bool<       : True if there is a record with name given
+
+        """
         return self.verify_field(table_class, table_class.NAME, name)
 
     def get_all(self, table_class) -> list:
-        """Fetches and returns the data"""
+        """
+            Execute query to get the all objects in the table
+
+            Parameters:
+                >table_class   : class<     : Class that represents the DB table
+
+            Returns:
+                >list[object]< :    List of objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS)
         return table_class.list_dict_to_object_list(payload["data"])
 
@@ -337,14 +366,14 @@ class MPCDatabase:
 
     def get_by_name(self, table_class, name: str):
         """
-            Execute query to get the account information related to the given id
+            Execute query to get the object related to the given name in the table
 
             Parameters:
-
-            id: int -> Id of account
+                >table_class    : class<     : Class that represents the DB table
+                >name           : string<   : Name of object
 
             Returns:
-            Dict contains the account information
+                >object<  : Object found in DB
         """
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.NAME, name)])["data"]
         if len(data) != 1:
@@ -352,34 +381,80 @@ class MPCDatabase:
         return table_class.dict_to_object(data[0])
 
     def get_by_id(self, table_class, id: int):
-        """Returns row from table by the id"""
+        """
+            Execute query to get the object related to the given id in the table
+
+            Parameters:
+
+                >table_class    : class<    : Class that represents the DB table
+                >id             : int<      : Id of object
+
+            Returns:
+                >list[object]<  :    List of objects found in DB
+        """
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])["data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
 
     def get_id_by_name(self, table_class, name: str) -> int:
-        """Returns row id by the given name"""
+        """
+            Execute query to get the id of object related to the given name in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >name           : string<   : Name of object
+
+            Returns:
+                >id<    : Id of object found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.NAME, name)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
     def get_max_id(self, table_class):
-        """Returns the maximum id in the table"""
+        """
+            Execute query to get the max id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >name           : string<   : Name of object
+
+            Returns:
+                >id<    : Id of object found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [f"max({table_class.ID})"])["data"]
         if len(payload) == 0:
             return None
         return payload[0][f"max({table_class.ID})"]
 
     def get_all_by_account_id(self, table_class, account_id: int) -> list:
-        """Returns all user information based on their account id"""
+        """
+            Execute query to get the all objects related to the given account_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >account_id     : int<      : account_id of object
+
+            Returns:
+                >list[object]<  : Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.ACCOUNT_ID, account_id)])["data"]
         return table_class.list_dict_to_object_list(payload)
 
     def get_all_by_account_name(self, table_class, account_name: str) -> list:
-        """Returns all user data based on account name"""
+        """
+            Execute query to get the all objects related to the given name in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >name           : string<   : Name of object
+
+            Returns:
+                >list[object]<  : Objects found in DB
+        """
         payload = self.select_payload(
             table_class.TABLE, table_class.EXPLICIT_COLUMNS,
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -388,12 +463,30 @@ class MPCDatabase:
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
     def get_ids_by_account_id(self, table_class, account_id) -> list[int]:
-        """Returns one or many ids based on the account id"""
+        """
+            Execute query to get the all id of objects related to the given account_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >account_id     : int<      : account_id of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.ACCOUNT_ID, account_id)])
         return [v[table_class.ID] for v in payload["data"]]
 
     def get_ids_by_account_name(self, table_class, account_name: str):
-        """Gets the id based on account name"""
+        """
+            Execute query to get the all id of objects related to the given account_name in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >account_name   : string<   : account_name of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(
             table_class.TABLE, [table_class.ID],
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -403,14 +496,33 @@ class MPCDatabase:
         return [v[table_class.ID] for v in payload["data"]]
 
     def get_all_by_hardware_id(self, table_class,  hardware_id: int):
-        """Gets all information based on hardware id"""
+        """
+            Execute query to get the all objects related to the given hardware_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >hardware_id    : int<     : hardware_id of object
+
+            Returns:
+                >list[object]<  : Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.HARDWARE_ID, hardware_id)])["data"]
 
         return table_class.list_dict_to_object_list(payload)
 
     def get_all_by_account_id_hardware_id(self, table_class, account_id: int, hardware_id: int):
-        """Gets all information of specified account id and hardware id"""
+        """
+            Execute query to get the all objects related to the given account_id and hardware_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >account_id    : int<      : account_id of object
+                >hardware_id    : int<     : hardware_id of object
+
+            Returns:
+                >list[object]<  : Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[
                                           MatchItem(table_class.ACCOUNT_ID, account_id),
@@ -419,7 +531,16 @@ class MPCDatabase:
         return table_class.list_dict_to_object_list(payload)
 
     def get_by_type(self, table_class, type: int):
-        """Gets data payload based on the specified type attribute"""
+        """
+            Execute query to get the object related to the given name in the table
+
+            Parameters:
+                >table_class    : class<     : Class that represents the DB table
+                >type           : string<   : Type of object
+
+            Returns:
+                >object<  : Object found in DB
+        """
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
             "data"]
         if len(data) != 1:
@@ -427,34 +548,91 @@ class MPCDatabase:
         return table_class.dict_to_object(data[0])
 
     def get_id_by_type(self, table_class, type: int) -> id:
-        """Gets the unique id based on the specified type attribute"""
+        """
+            Execute query to get the id of object related to the given type in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >type           : string<   : Type of object
+
+            Returns:
+                >id<    : Id of object found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.TYPE, type)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
     def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
-        """Gets the saving policy id based on the corresponding hardware id attribute"""
+        """
+            Execute query to get the all saving policy ids of objects related to the given hardware_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >hardware_id    : int<      : hardware_id of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
 
     def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int) -> list[int]:
-        """Gets the hardware id by the corresponding saving policy id attribute"""
+        """
+            Execute query to get the all hardware ids of objects related to the given saving_policy_id in the table
+
+            Parameters:
+                >table_class        : class<    : Class that represents the DB table
+                >saving_policy_id   : int<      : saving_policy_id of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
     def get_notification_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
-        """Getss notification id by the corresponding hardware id attribute"""
+        """
+            Execute query to get the all notification ids of objects related to the given hardware_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >hardware_id    : int<      : hardware_id of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.NOTIFICATION_ID] for v in payload["data"]]
 
     def get_hardware_ids_by_notification_id(self, table_class, notification_id: int) -> list[int]:
-        """Gets the hardware id based on the corresponding notification id attribute"""
+        """
+            Execute query to get the all hardware ids of objects related to the given notification_id in the table
+
+            Parameters:
+                >table_class    : class<    : Class that represents the DB table
+                >notification_id    : int<      : notification_id of object
+
+            Returns:
+                >list[int]<     : IDs of Objects found in DB
+        """
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
     def get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int):
-        """Gets all specified information in multiple tables using a join"""
+        """
+            Execute query to get the all hardware ids of objects related to the given notification_id in the table
+
+            Parameters:
+                >table_class        : class<    : Class that represents the DB table
+                >join_table_class   : string<   : name of table that will be joined to the table
+                >join_field         : string<   : The name of field that the tables will be joined on
+                >match_field        : string<   : The name of field that the tables will be matched with
+                >match_id           : int<      : ID that the match field will be matched to
+
+            Returns:
+                >list[object]<      : Objects found in DB
+        """
         match_id = int(match_id)
         if join_field[:len("EXPLICIT")] != "EXPLICIT":
             raise ValueError("join_field should be explicit name")
@@ -467,12 +645,36 @@ class MPCDatabase:
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
     def update_fields(self, table_class, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
-        """Updates the rows in a specified table"""
+        """
+            Updates the information in the table
+
+            Parameters:
+
+                >table_class    : class<            : Class that represents the DB table that is to be updated
+                >condition_item : MatchItem<        : Match item that is used to find the DB record in the table
+                >update_list    : list[MatchItem]<  : List of pairs of key-value items that will be updated
+
+
+            Returns:
+            None
+        """
         self.update(table_class, MatchItem(condition_tuple[0], condition_tuple[1]),
                     [MatchItem(item[0], item[1]) for item in update_list])
 
     def delete_by_field(self, table_class, condition_field: tuple[str, str]):
-        """Deletes the specified rows in a specified table"""
+        """
+            Deletes the records by given fields
+
+            Parameters:
+
+                >table_class    : class<            : Class that represents the DB table that is to be updated
+                >condition_item : MatchItem<        : Match item that is used to find the DB record in the table
+                >update_list    : list[MatchItem]<  : List of pairs of key-value items that will be updated
+
+
+            Returns:
+            None
+        """
         self.delete(table_class, MatchItem(condition_field[0], condition_field[1]))
 
 
