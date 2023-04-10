@@ -17,13 +17,12 @@ from mpc_api import MPC_API
 import boto3
 import re
 
-
 api = MPC_API()
 s3 = boto3.client('s3')
 database = MPCDatabase()
 
-
 def lambda_handler(event, context):
+    """Manages the database queries and speaks to the imported libraries to make things possible"""
     print(event)
     print(context)
 
@@ -58,8 +57,8 @@ def lambda_handler(event, context):
         'body': json.dumps(data)
     }
 
-
 def json_payload(body, error: list = []):
+    """If there's an error, return an error, if not, then return the proper status code, headers, and body"""
     if len(error) != 0:
         return {
             'statusCode': 400,
@@ -72,64 +71,64 @@ def json_payload(body, error: list = []):
             'body': json.dumps(body)
     }
 
-
 def check_email(email):
+    """Returns true if the email is in the proper format, returns false if it's not"""
     regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
     if re.fullmatch(regex, email):
         return True
     else:
         return False
 
-
 def check_password(password):
+    """Makes sure the password is in the correct format and is at least 8 characters"""
     if re.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password):
         return True
     else:
         return False
 
-
 def get_all(table_class):
+    """Gets all specified items in the database"""
     items: list[table_class] = database.get_all(table_class)
     dict_list = table_class.list_object_to_dict_list(items)
 
     return json_payload(dict_list)
 
-
 def get_by_id(table_class, pathPara):
+    """Gets all information in the database of the specified id"""
     id = pathPara["id"]
     item: table_class = database.get_by_id(table_class, id)
     body = table_class.object_to_dict(item)
 
     return json_payload(body)
 
-
 def get_by_name(table_class, pathPara):
+    """Gets all information based on the specified name"""
     name = pathPara["name"]
     resolution = database.get_by_name(table_class, name)
     body = table_class.object_to_dict(resolution)
 
     return json_payload(body)
 
-
 def delete_by_id(table_class, pathPara):
+    """Deletes information based on the specified id"""
     database.delete_by_field(table_class, (table_class.ID, pathPara["id"]))
 
     return json_payload({})
 
-
 def delete_by_name(table_class, pathPara):
+    """Deletes information from the database based on the specified name"""
     database.delete_by_field(table_class, (table_class.NAME, pathPara["name"]))
 
     return json_payload({})
 
-
 def delete_by_hardware_id(table_class, pathPara):
+    """Deletes information from the database based on the specified hardware id"""
     database.delete_by_field(table_class, (table_class.HARDWARE_ID, pathPara["hardware_id"]))
 
     return json_payload({})
 
-
 def update_by_id(table_class, pathPara, queryPara):
+    """Updates the database rows in a table based on the specified id"""
     id = pathPara["id"]
     update_keys = set(table_class.COLUMNS).intersection(queryPara.keys())
     if table_class.ID in update_keys:
@@ -138,18 +137,18 @@ def update_by_id(table_class, pathPara, queryPara):
 
     return json_payload({})
 
-
 @api.handle("/")
 def home(event, pathPara, queryPara):
+    """Handles query events using the json libraries and returns a labeled array"""
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
         'body': json.dumps(event)
     }
-
 
 @api.handle("/", httpMethod="POST")
 def home(event, pathPara, queryPara):
+    """Handles Query events using the json libraries and returns a labeled array"""
 
     return {
         'statusCode': 200,
@@ -157,9 +156,9 @@ def home(event, pathPara, queryPara):
         'body': json.dumps(event)
     }
 
-
 @api.handle("/image")
 def image_request(event, pathPara, queryPara):
+    """Handles query events using the json libraries and handles images in jpeg format"""
     image_name = "bird-thumbnail.jpg"
     response = s3.get_object(
         Bucket='mpc-capstone',
@@ -175,9 +174,9 @@ def image_request(event, pathPara, queryPara):
         'isBase64Encoded': True
     }
 
-
 @api.handle("/image/{image_name}")
 def image_request(event, pathPara, queryPara):
+    """Requests an image from the server and makes sure it's in the right format"""
     image_name = pathPara["image_name"]
     response = s3.get_object(
         Bucket='mpc-capstone',
@@ -198,9 +197,9 @@ def image_request(event, pathPara, queryPara):
         'isBase64Encoded': True
     }
 
-
 @api.handle("/video")
 def video_request(event, pathPara, queryPara):
+    """Requests video from the server and makes sure it's in the correct format"""
     video_name = "cat.mp4"
     response = s3.get_object(
         Bucket='mpc-capstone',
@@ -216,9 +215,9 @@ def video_request(event, pathPara, queryPara):
         'isBase64Encoded': True
     }
 
-
 @api.handle("/video/{video_name}")
 def video_request_by_filename(event, pathPara, queryPara):
+    """Requests video based on the given file path"""
     video_name = pathPara["video_name"]
 
     response = s3.get_object(
@@ -238,14 +237,14 @@ def video_request_by_filename(event, pathPara, queryPara):
         'isBase64Encoded': True
     }
 
-
 @api.handle("/account")
 def accounts_request(event, pathPara, queryPara):
+    """Gets all rows and columns of the Account table"""
     return get_all(Account)
-
 
 @api.handle("/account/signup", httpMethod="POST")
 def account_signup(event, pathPara, queryPara):
+    """Handles new accounts from users and makes sure user information is in the correct format"""
     body = event["body"]
     error = []
     if database.verify_name(Account, body[Account.NAME]):
@@ -260,9 +259,9 @@ def account_signup(event, pathPara, queryPara):
         return json_payload({"message": "Account created"})
     return json_payload(None, error)
 
-
 @api.handle("/account/signin", httpMethod="POST")
 def account_signin(event, pathPara, queryPara):
+    """Handles users signing into their account by verifying their username and password in the database"""
     body: dict = event["body"]
     error = []
     if not database.verify_name(Account, body[Account.NAME]):
@@ -281,27 +280,27 @@ def account_signin(event, pathPara, queryPara):
         return json_payload({"message": "Signed in to Account", Account.TOKEN:  token})
     return json_payload(None, error)
 
-
 @api.handle("/account", httpMethod="POST")
 def account_insert(event, pathPara, queryPara):
+    """Inserts new row into the account table which represents a new user"""
     account: Account = Account(queryPara["username"], queryPara["password"], queryPara["email"], "C")
     database.insert(account)
     a: Account = database.get_by_name(Account, queryPara["username"])
     return json_payload({"id": a.account_id, "token": a.token})
 
-
 @api.handle("/account/{id}")
 def account_request_by_id(event, pathPara, queryPara):
+    """Gets account based on specified id"""
     return get_by_id(Account, pathPara)
-
 
 @api.handle("/hardware")
 def hardware_request(event, pathPara, queryPara):
+    """Gets all rows and columns of the hardware table"""
     return get_all(Hardware)
-
 
 @api.handle("/hardware", httpMethod="POST")
 def hardware_insert(event, pathPara, queryPara):
+    """Inserts new rows into the hardware table based on account id"""
     if "account_id" in queryPara:
         hardware = Hardware(queryPara["name"], queryPara["max_resolution"], account_id=queryPara["account_id"])
     else:
@@ -310,24 +309,24 @@ def hardware_insert(event, pathPara, queryPara):
     id = database.get_id_by_name(Hardware, queryPara["name"])
     return json_payload({"id": id})
 
-
 @api.handle("/hardware/{id}")
 def hardware_request_by_id(event, pathPara, queryPara):
+    """Gets information from the hardware table based on specified id"""
     return get_by_id(Hardware, pathPara)
-
 
 @api.handle("/hardware/{id}", httpMethod="DELETE")
 def hardware_delete_by_id(event, pathPara, queryPara):
+    """Deletes rows from the hardware table of the specified id"""
     return delete_by_id(Hardware, pathPara)
-
 
 @api.handle("/hardware/{id}", httpMethod="PUT")
 def hardware_update_by_id(event, pathPara, queryPara):
+    """Updates the hardware table based on the specified id"""
     return update_by_id(Hardware, pathPara, queryPara)
-
 
 @api.handle("/recording")
 def recordings_request(event, pathPara, queryPara):
+    """Gets recordings from the server and and formats the information from AWS into appropriate variables for processing"""
     recordings: list[Recording] = database.get_all(Recording)
     for rec in recordings:
         bucket = "mpc-capstone"
@@ -341,9 +340,9 @@ def recordings_request(event, pathPara, queryPara):
 
     return json_payload(dict_list)
 
-
 @api.handle("/recording", httpMethod="POST")
 def recording_insert(event, pathPara, queryPara):
+    """Inserts a recording into the database of the specified account id"""
     recording = Recording(queryPara["file_name"], "CURDATE()", "NOW()",
                           account_id=queryPara["account_id"], hardware_id=queryPara["hardware_id"])
     recording.add_date_timestamp_from_query_para(queryPara)
@@ -351,9 +350,9 @@ def recording_insert(event, pathPara, queryPara):
     id = database.get_id_by_name(Recording, queryPara["file_name"])
     return json_payload({"id": id})
 
-
 @api.handle("/recording/{id}")
 def recording_request_by_id(event, pathPara, queryPara):
+    """Gets recording from AWS and stores it in appropriate variables for processing"""
     id = pathPara["id"]
     recording = database.get_by_id(Recording, id)
     bucket = "mpc-capstone"
@@ -366,46 +365,46 @@ def recording_request_by_id(event, pathPara, queryPara):
 
     return json_payload(body)
 
-
 @api.handle("/recording/{id}", httpMethod="DELETE")
 def recording_delete_by_id(event, pathPara, queryPara):
+    """Deletes recording from table based on specified id"""
     return delete_by_id(Recording, pathPara)
-
 
 @api.handle("/recording/{id}", httpMethod="PUT")
 def recording_update_by_id(event, pathPara, queryPara):
+    """Updates recording table based on specified id"""
     return update_by_id(Recording, pathPara, queryPara)
-
 
 @api.handle("/criteria")
 def criteria_request(event, pathPara, queryPara):
+    """Gets all rows and columns from the Criteria table"""
     return get_all(Criteria)
-
 
 @api.handle("/criteria", httpMethod="POST")
 def criteria_insert(event, pathPara, queryPara):
+    """Inserts new rows into the criteria table"""
     criteria = Criteria(queryPara["criteria_type"], queryPara["magnitude"], queryPara["duration"])
     database.insert(criteria)
     return json_payload({})
 
-
 @api.handle("/criteria/{id}")
 def criteria_request_by_id(event, pathPara, queryPara):
+    """Gets all information from Criteria table based on specified id"""
     return get_by_id(Criteria, pathPara)
-
 
 @api.handle("/criteria/{id}", httpMethod="DELETE")
 def criteria_delete_by_id(event, pathPara, queryPara):
+    """Deletes rows from the criteria table based on the specified id"""
     return delete_by_id(Criteria, pathPara)
-
 
 @api.handle("/criteria/{id}", httpMethod="PUT")
 def criteria_update_by_id(event, pathPara, queryPara):
+    """Updates the criteria table rows based on the specified id"""
     return update_by_id(Criteria, pathPara, queryPara)
-
 
 @api.handle("/notification")
 def notification_request(event, pathPara, queryPara):
+    """Requests notifications from the hardware based on specified notification id"""
     notifications: list[Notification] = database.get_all(Notification)
     for notification in notifications:
         notification.hardware = database.get_hardware_ids_by_notification_id(Hardware_has_Notification, notification.notification_id)
@@ -413,9 +412,9 @@ def notification_request(event, pathPara, queryPara):
 
     return json_payload(dict_list)
 
-
 @api.handle("/notification", httpMethod="POST")
 def notification_insert(event, pathPara, queryPara):
+    """Inserts rows into the notification table"""
     notification = Notification(queryPara["notification_type"], queryPara["criteria_id"])
     database.insert(notification)
     # id = database.get_id_by_type(Notification, queryPara["notification_type"])
@@ -425,9 +424,9 @@ def notification_insert(event, pathPara, queryPara):
         database.insert(hardware_notification)
     return json_payload({"id": id})
 
-
 @api.handle("/notification/{id}")
 def notification_request_by_id(event, pathPara, queryPara):
+    """Gets notification from hardware component based on the notification id"""
     id = pathPara["id"]
     notification = database.get_by_id(Notification, id)
     notification.hardware = database.get_hardware_ids_by_notification_id(Hardware_has_Notification,
@@ -436,65 +435,65 @@ def notification_request_by_id(event, pathPara, queryPara):
 
     return json_payload(body)
 
-
 @api.handle("/notification/{id}", httpMethod="DELETE")
 def notification_delete_by_id(event, pathPara, queryPara):
+    """Deletes notification from the table based on specified id"""
     return delete_by_id(Notification, pathPara)
-
 
 @api.handle("/notification/{id}", httpMethod="PUT")
 def notification_update_by_id(event, pathPara, queryPara):
+    """Updates notification table with new information"""
     return update_by_id(Notification, pathPara, queryPara)
-
 
 @api.handle("/notification/{id}/add/{hardware_id}", httpMethod="POST")
 def notification_insert_hardware(event, pathPara, queryPara):
+    """Adds new notification into the into the system from a hardware component"""
     hardware_notification = Hardware_has_Notification(pathPara["hardware_id"], pathPara["id"])
     database.insert(hardware_notification)
     return json_payload({})
 
-
 @api.handle("/notification/{id}/hardware")
 def notification_hardware_request(event, pathPara, queryPara):
+    """Gets notification from specified hardware component based on id"""
     data = database.get_all_by_join_id(Hardware, Hardware_has_Notification,
                                        "EXPLICIT_HARDWARE_ID", "EXPLICIT_NOTIFICATION_ID", pathPara["id"])
     return json_payload(Hardware.list_object_to_dict_list(data))
 
-
 @api.handle("/notification/{id}/hardware/{hardware_id}", httpMethod="DELETE")
 def notification_hardware_delete_by_id(event, pathPara, queryPara):
+    """Deletes notification based on id"""
     return delete_by_hardware_id(Hardware_has_Notification, pathPara)
-
 
 @api.handle("/resolution")
 def resolution_request(event, pathPara, queryPara):
+    """Gets all rows and columns from the Resolution table"""
     return get_all(Resolution)
-
 
 @api.handle("/resolution", httpMethod="POST")
 def resolution_insert(event, pathPara, queryPara):
+    """Inserts new rows into the resolution table"""
     resolution = Resolution(queryPara["resolution_name"], queryPara["width"], queryPara["height"])
     database.insert(resolution)
     return json_payload({})
 
-
 @api.handle("/resolution/{name}")
 def resolution_request_by_name(event, pathPara, queryPara):
+    """Gets rows from Resolution table based on name"""
     return get_by_name(Resolution, pathPara)
-
 
 @api.handle("/resolution/{name}", httpMethod="DELETE")
 def resolution_delete_by_id(event, pathPara, queryPara):
+    """Deletes rows from Resolution table based on id"""
     return delete_by_name(Resolution, pathPara)
-
 
 @api.handle("/resolution/{name}", httpMethod="PUT")
 def resolution_update_by_id(event, pathPara, queryPara):
+    """Updates the resolution table based on specified id"""
     return update_by_id(Notification, pathPara, queryPara)
-
 
 @api.handle("/saving_policy")
 def saving_policy_request(event, pathPara, queryPara):
+    """Gets saving policy based on saving policy id"""
     saving_policies = database.get_all(Saving_Policy)
     for policy in saving_policies:
         policy.hardware = database.get_hardware_ids_by_saving_policy_id(Hardware_has_Saving_Policy, policy.saving_policy_id)
@@ -502,16 +501,16 @@ def saving_policy_request(event, pathPara, queryPara):
 
     return json_payload(dict_list)
 
-
 @api.handle("/saving_policy", httpMethod="POST")
 def saving_policy_insert(event, pathPara, queryPara):
+    """Inserts new saving policy into saving_policy table"""
     saving_policy = Saving_Policy(queryPara["max_time"], queryPara["resolution_name"])
     database.insert(saving_policy)
     return json_payload({})
 
-
 @api.handle("/saving_policy/{id}")
 def saving_policy_request_by_id(event, pathPara, queryPara):
+    """Gets saving policy based on specified id"""
     id = pathPara["id"]
     saving_policy = database.get_by_id(Saving_Policy, id)
     saving_policy.hardware = database.get_hardware_ids_by_saving_policy_id(Hardware_has_Saving_Policy, saving_policy.saving_policy_id)
@@ -519,35 +518,34 @@ def saving_policy_request_by_id(event, pathPara, queryPara):
 
     return json_payload(body)
 
-
 @api.handle("/saving_policy/{id}", httpMethod="DELETE")
 def saving_policy_delete_by_id(event, pathPara, queryPara):
+    """Deletes saving policy based on specified id"""
     return delete_by_id(Saving_Policy, pathPara)
-
 
 @api.handle("/saving_policy/{id}", httpMethod="PUT")
 def saving_policy_update_by_id(event, pathPara, queryPara):
+    """Updates saving policy table based on id"""
     return update_by_id(Saving_Policy, pathPara, queryPara)
-
 
 @api.handle("/saving_policy/{id}/add/{hardware_id}", httpMethod="POST")
 def saving_policy_add_hardware(event, pathPara, queryPara):
+    """Adds hardware component to the saving policy table based on hardware id"""
     saving_policy = Hardware_has_Saving_Policy(pathPara["hardware_id"], pathPara["id"])
     database.insert(saving_policy)
     return json_payload({})
 
-
 @api.handle("/saving_policy/{id}/hardware")
 def saving_policy_hardware_request(event, pathPara, queryPara):
+    """Gets information from saving policy and hardware table with a join"""
     data = database.get_all_by_join_id(Hardware, Hardware_has_Saving_Policy,
                                        "EXPLICIT_HARDWARE_ID", "EXPLICIT_SAVING_POLICY_ID", pathPara["id"])
     return json_payload(Hardware.list_object_to_dict_list(data))
 
-
 @api.handle("/saving_policy/{id}/hardware/{hardware_id}", httpMethod="DELETE")
 def saving_policy_hardware_delete_by_id(event, pathPara, queryPara):
+    """Deletes saving policy based on the specified hardware id"""
     return delete_by_hardware_id(Hardware_has_Saving_Policy, pathPara)
-
 
 if __name__ == "__main__":
     import urllib
@@ -571,3 +569,4 @@ if __name__ == "__main__":
 
     print(lambda_handler(event, None))
     database.close()
+

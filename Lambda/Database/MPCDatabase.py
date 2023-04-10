@@ -1,3 +1,52 @@
+try:
+    from Database.Data.Data import Data
+except:
+    from Lambda.Database.Data.Data import Data
+
+"""Manages the saving policy and settings of the system"""
+class Saving_Policy(Data):
+    TABLE = "Saving_Policy"
+    """Specifies the Saving_Policy attribute"""
+    ID = "saving_policy_id"
+    """Specifies the saving_policy_id attribute"""
+    MAX_TIME = "max_time"
+    """Specifies the max_time attribute"""
+    RESOLUTION_NAME = "resolution_name"
+    """Specifies the resolubtion_name attribute"""
+    COLUMNS = [ID, MAX_TIME, RESOLUTION_NAME]
+    """Organizes the id, max time, and resolution name attributes in an array"""
+    EXPLICIT_ID = f"{TABLE}.{ID}"
+    """Creates an explicit version of the id variable"""
+    EXPLICIT_MAX_TIME = f"{TABLE}.{MAX_TIME}"
+    """Creates an explicit version of the max time variable"""
+    EXPLICIT_RESOLUTION_NAME = f"{TABLE}.{RESOLUTION_NAME}"
+    """Creates an explicit version of the resolution name variable"""
+    EXPLICIT_COLUMNS = [EXPLICIT_ID, EXPLICIT_MAX_TIME, EXPLICIT_RESOLUTION_NAME]
+    """Organizes the explicit versions of the variables above into an array"""
+
+    def __init__(self, max_time: int, resolution_name: str, saving_policy_id: int = None):
+        """Initializes the max time, resulution name, and saving policy id variables"""
+        self.max_time = int(max_time)
+        self.resolution_name = resolution_name
+        self.saving_policy_id = int(saving_policy_id) if saving_policy_id is not None else None
+
+    def __str__(self):
+        """Returns a formatted string of the variables"""
+        return "[Saving_Policy  ]               :Max_Time: {:<12} Resolution_Name: {:<12} Saving_Policy_ID: {:<8}"\
+            .format(self.max_time, self.resolution_name, self.saving_policy_id)
+
+    @staticmethod
+    def dict_to_object(payload: dict, explicit: bool = False) -> "Saving_Policy":
+        """Determines if explicit is true, if so then return the explicit variables, if not return the normal ones"""
+        if explicit:
+            return Saving_Policy(payload[Saving_Policy.EXPLICIT_MAX_TIME], payload[Saving_Policy.EXPLICIT_RESOLUTION_NAME], payload[Saving_Policy.EXPLICIT_ID])
+        else:
+            return Saving_Policy(payload[Saving_Policy.MAX_TIME], payload[Saving_Policy.RESOLUTION_NAME], payload[Saving_Policy.ID])
+
+
+
+
+
 import sys
 from typing import Match
 
@@ -8,12 +57,11 @@ try:
 except:
     from Lambda.Database.Data.Account import Account
 
-
 class MatchItem:
     def __init__(self, key: str, value, table: str = None):
+        """Initializes the key and table variables"""
         self.key = key
         self.value = f"'{value}'" if type(value) is str and value[-1:] != ")" else f"{str(value)}"
-
 
 class JoinItem:
     INNER = "Inner"
@@ -22,11 +70,11 @@ class JoinItem:
     Right = "Right"
 
     def __init__(self, join_type: str, join_table: str, join_field1: str, join_field2: str):
+        """Initializes the join type, join table, join field 1, and join field 2 variables"""
         self.join_type = join_type
         self.join_table = join_table
         self.join_field1 = join_field1
         self.join_field2 = join_field2
-
 
 class MPCDatabase:
     def __init__(self):
@@ -38,6 +86,7 @@ class MPCDatabase:
         print("Connected")
 
     def close(self):
+        """Closes connection to database"""
         self.connection.close()
 
     def query(self, script: str) -> list:
@@ -62,7 +111,7 @@ class MPCDatabase:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
 
-    def insert(self, object_instance: object, ignore: bool = False):
+    def insert(self, object_instance, ignore: bool = False):
         """
             Perform insert into database
 
@@ -90,7 +139,8 @@ class MPCDatabase:
             raise err
         return
 
-    def truncate(self, table_class: type, foreign_key_check: bool = True, auto_increment_reset: bool = False):
+    def truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False):
+        """Truncates the information in the database"""
         script = "TRUNCATE " + table_class.__name__ + ";"
         try:
             with self.connection.cursor() as cur:
@@ -116,7 +166,8 @@ class MPCDatabase:
             raise err
         return
 
-    def update(self, table_class: type, condition_item: MatchItem, update_list: list[MatchItem]):
+    def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
+        """Updates the information in the database"""
         if len(update_list) == 0:
             return
         script = self.gen_update_script(table_class.__name__, condition_item, update_list)
@@ -132,7 +183,8 @@ class MPCDatabase:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
 
-    def delete(self, table_class: type, condition_item: MatchItem):
+    def delete(self, table_class, condition_item: MatchItem):
+        """Deletes specified information in the database"""
         script = f"Delete From {table_class.__name__} Where {condition_item.key} = {condition_item.value}"
         if "delete" not in script.lower():
             raise TypeError("Delete should only be delete")
@@ -147,6 +199,7 @@ class MPCDatabase:
             raise err
 
     def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
+        """Generates sql scripts and queries to specify information based on certain constraints"""
         join_clause = "".join(
                    [" {} Join {} On {} = {}".format(item.join_type, item.join_table, item.join_field1, item.join_field2)
                         for item in join_list]
@@ -160,17 +213,20 @@ class MPCDatabase:
                where_clause
 
     def gen_insert_script(self, table_name: str, keys: list, values: list, ignore: bool) -> str:
+        """Creates an sql insert statement for adding rows to the database"""
         return "Insert " + \
                ("Ignore" if ignore else "") + \
                " Into " + table_name + \
                "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str and v[-1:] != ")" else f"{str(v)}") for v in values]) + ");"
 
     def gen_update_script(self, table_name: str, condition_item: MatchItem, update_items: list[MatchItem]):
+        """Creates an sql update statement"""
         return  "Update " + table_name + \
                 " Set " + ", ".join([f"{item.key} = {item.value}"for item in update_items]) + \
                 " Where " + f"{condition_item.key} = {condition_item.value}"
 
     def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> dict:
+        """Assembles query to be sent to database"""
         script = self.gen_select_script(table_name, columns, match_list, join_list)
         result = self.query(script)
         data = []
@@ -180,34 +236,40 @@ class MPCDatabase:
 
         return payload
 
-    def verify_field(self, table_class: type, field: str, value: str):
+    def verify_field(self, table_class, field: str, value: str):
+        """verifies values to make sure the correct field is being used"""
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(field, value)])
         return len(entries["data"]) == 1
 
-    def verify_fields(self, table_class: type, field_value_list: list[tuple]):
+    def verify_fields(self, table_class, field_value_list: list[tuple]):
+        """Verifies multiple fields"""
         entries = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(item[0], item[1]) for item in field_value_list])
         return len(entries["data"]) == 1
 
-    def verify_id(self, table_class: type, id: int) -> bool:
+    def verify_id(self, table_class, id: int) -> bool:
+        """uses verify_field function to verify the id"""
         return self.verify_field(table_class, table_class.ID, str(id))
 
-    def verify_name(self, table_class: type, name: str) -> bool:
+    def verify_name(self, table_class, name: str) -> bool:
+        """Uses the verify_field function to verify the name"""
         return self.verify_field(table_class, table_class.NAME, name)
 
-    def get_all(self, table_class: type) -> list:
+    def get_all(self, table_class) -> list:
+        """Fetches and returns the data"""
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS)
         return table_class.list_dict_to_object_list(payload["data"])
 
-    def get_field_by_name(self, table_class: type, field: str, name: str):
+    def get_field_by_name(self, table_class, field: str, name: str):
+        """Fetches and returns the field of specified data"""
         entries = self.select_payload(table_class.TABLE, [field],
                                       match_list=[MatchItem(table_class.NAME, name)])
         if len(entries["data"]) == 0:
             return None
         return entries["data"][0][field]
 
-    def get_by_name(self, table_class: type, name: str):
+    def get_by_name(self, table_class, name: str):
         """
             Execute query to get the account information related to the given id
 
@@ -223,30 +285,35 @@ class MPCDatabase:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_by_id(self, table_class: type, id: int):
+    def get_by_id(self, table_class, id: int):
+        """Returns row from table by the id"""
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])["data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_id_by_name(self, table_class: type, name: str) -> int:
+    def get_id_by_name(self, table_class, name: str) -> int:
+        """Returns row id by the given name"""
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.NAME, name)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
-    def get_max_id(self, table_class: type):
+    def get_max_id(self, table_class):
+        """Returns the maximum id in the table"""
         payload = self.select_payload(table_class.TABLE, [f"max({table_class.ID})"])["data"]
         if len(payload) == 0:
             return None
         return payload[0][f"max({table_class.ID})"]
 
-    def get_all_by_account_id(self, table_class: type, account_id: int) -> list:
+    def get_all_by_account_id(self, table_class, account_id: int) -> list:
+        """Returns all user information based on their account id"""
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.ACCOUNT_ID, account_id)])["data"]
         return table_class.list_dict_to_object_list(payload)
 
-    def get_all_by_account_name(self, table_class: type, account_name: str) -> list:
+    def get_all_by_account_name(self, table_class, account_name: str) -> list:
+        """Returns all user data based on account name"""
         payload = self.select_payload(
             table_class.TABLE, table_class.EXPLICIT_COLUMNS,
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -254,11 +321,13 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
-    def get_ids_by_account_id(self, table_class: type, account_id) -> list[int]:
+    def get_ids_by_account_id(self, table_class, account_id) -> list[int]:
+        """Returns one or many ids based on the account id"""
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.ACCOUNT_ID, account_id)])
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_ids_by_account_name(self, table_class: type, account_name: str):
+    def get_ids_by_account_name(self, table_class, account_name: str):
+        """Gets the id based on account name"""
         payload = self.select_payload(
             table_class.TABLE, [table_class.ID],
             match_list=[MatchItem(Account.NAME, account_name)],
@@ -267,13 +336,15 @@ class MPCDatabase:
 
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_all_by_hardware_id(self, table_class: type,  hardware_id: int):
+    def get_all_by_hardware_id(self, table_class,  hardware_id: int):
+        """Gets all information based on hardware id"""
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[MatchItem(table_class.HARDWARE_ID, hardware_id)])["data"]
 
         return table_class.list_dict_to_object_list(payload)
 
-    def get_all_by_account_id_hardware_id(self, table_class: type, account_id: int, hardware_id: int):
+    def get_all_by_account_id_hardware_id(self, table_class, account_id: int, hardware_id: int):
+        """Gets all information of specified account id and hardware id"""
         payload = self.select_payload(table_class.TABLE, table_class.COLUMNS,
                                       match_list=[
                                           MatchItem(table_class.ACCOUNT_ID, account_id),
@@ -281,36 +352,43 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload)
 
-    def get_by_type(self, table_class: type, type: int):
+    def get_by_type(self, table_class, type: int):
+        """Gets data payload based on the specified type attribute"""
         data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
             "data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
 
-    def get_id_by_type(self, table_class: type, type: int) -> id:
+    def get_id_by_type(self, table_class, type: int) -> id:
+        """Gets the unique id based on the specified type attribute"""
         payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.TYPE, type)])["data"]
         if len(payload) == 0:
             return None
         return payload[0][table_class.ID]
 
-    def get_saving_policy_ids_by_hardware_id(self, table_class: type, hardware_id: int) -> list[int]:
+    def get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
+        """Gets the saving policy id based on the corresponding hardware id attribute"""
         payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_saving_policy_id(self, table_class: type, saving_policy_id: int) -> list[int]:
+    def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int) -> list[int]:
+        """Gets the hardware id by the corresponding saving policy id attribute"""
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
-    def get_notification_ids_by_hardware_id(self, table_class: type, hardware_id: int) -> list[int]:
+    def get_notification_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
+        """Getss notification id by the corresponding hardware id attribute"""
         payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.NOTIFICATION_ID] for v in payload["data"]]
 
-    def get_hardware_ids_by_notification_id(self, table_class: type, notification_id: int) -> list[int]:
+    def get_hardware_ids_by_notification_id(self, table_class, notification_id: int) -> list[int]:
+        """Gets the hardware id based on the corresponding notification id attribute"""
         payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
-    def get_all_by_join_id(self, table_class: type, join_table_class, join_field: str, match_field: str, match_id: int):
+    def get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int):
+        """Gets all specified information in multiple tables using a join"""
         match_id = int(match_id)
         if join_field[:len("EXPLICIT")] != "EXPLICIT":
             raise ValueError("join_field should be explicit name")
@@ -322,14 +400,14 @@ class MPCDatabase:
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
-    def update_fields(self, table_class: type, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
+    def update_fields(self, table_class, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]):
+        """Updates the rows in a specified table"""
         self.update(table_class, MatchItem(condition_tuple[0], condition_tuple[1]),
                     [MatchItem(item[0], item[1]) for item in update_list])
 
-    def delete_by_field(self, table_class: type, condition_field: tuple[str, str]):
+    def delete_by_field(self, table_class, condition_field: tuple[str, str]):
+        """Deletes the specified rows in a specified table"""
         self.delete(table_class, MatchItem(condition_field[0], condition_field[1]))
-
-
 
 
 if __name__ == "__main__":

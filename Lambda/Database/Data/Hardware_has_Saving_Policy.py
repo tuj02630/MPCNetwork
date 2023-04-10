@@ -20,19 +20,19 @@ class Hardware_has_Saving_Policy(Data):
     EXPLICIT_COLUMNS = [EXPLICIT_HARDWARE_ID, EXPLICIT_SAVING_POLICY_ID]
     """Organizes the explicit version of the variables above into an array"""
 
-    """Initializes the hardware id and saving policy id variables"""
     def __init__(self, hardware_id: int, saving_policy_id: int):
+        """Initializes the hardware id and saving policy id variables"""
         self.hardware_id = int(hardware_id)
         self.saving_policy_id = int(saving_policy_id)
 
-    """Returns a formatted string version of the variables"""
     def __str__(self):
+        """Returns a formatted string version of the variables"""
         return "[Hardware_has_Saving_Policy ]               :SAVING_POLICY_ID: {:<12} HARDWARE_ID: {:<8}" \
             .format(self.hardware_id, self.saving_policy_id)
 
-    """Determines if the explicit variable is true, if so then return the explicit variables, if not return the normal version"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit: bool = False) -> "Hardware_has_Saving_Policy":
+    def dict_to_object(payload: dict, explicit=False) -> "Hardware_has_Saving_Policy":
+        """Determines if the explicit variable is true, if so then return the explicit variables, if not return the normal version"""
         if explicit:
             return Hardware_has_Saving_Policy(
                 payload[Hardware_has_Saving_Policy.EXPLICIT_HARDWARE_ID],

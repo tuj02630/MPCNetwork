@@ -24,21 +24,22 @@ class Resolution(Data):
     EXPLICIT_COLUMNS = [EXPLICIT_NAME, EXPLICIT_WIDTH, EXPLICIT_HEIGHT]
     """Organizes the explicit version of the variables above into an array"""
 
-    """Initializes the resolution name, width, and height variables"""
     def __init__(self, resolution_name: str, width: int, height: int):
+        """Initializes the resolution name, width, and height variables"""
         self.resolution_name = resolution_name
         self.width = int(width)
         self.height = int(height)
 
-    """Returns a formatted string version of the variables"""
     def __str__(self):
+        """Returns a formatted string version of the variables"""
         return "[Resolution    ]               :Resolution_Name: {:<12} Width: {:<12} Height: {:<8}"\
             .format(self.resolution_name, self.width, self.height)
 
-    """Determines if explicit is true, if true then return the explicit variables, if not then return the normal ones"""
     @staticmethod
     def dict_to_object(payload: dict, explicit: bool = False) -> "Resolution":
+        """Determines if explicit is true, if true then return the explicit variables, if not then return the normal ones"""
         if explicit:
             return Resolution(payload[Resolution.EXPLICIT_NAME], payload[Resolution.EXPLICIT_WIDTH], payload[Resolution.EXPLICIT_HEIGHT])
         else:
             return Resolution(payload[Resolution.NAME], payload[Resolution.WIDTH], payload[Resolution.HEIGHT])
+

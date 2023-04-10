@@ -1,3 +1,5 @@
+
+
 try:
     from Database.Data.Data import Data
 except:
@@ -20,19 +22,19 @@ class Hardware_has_Notification(Data):
     EXPLICIT_COLUMNS = [EXPLICIT_HARDWARE_ID, EXPLICIT_NOTIFICATION_ID]
     """Organizes the explicit version of the variables above into an array"""
 
-    """Initializes the hardware id and notification id variables"""
     def __init__(self, hardware_id: int, notification_id: int):
+        """Initializes the hardware id and notification id variables"""
         self.hardware_id = int(hardware_id)
         self.notification_id = int(notification_id)
 
-    """Returns a formatted string version of the variables"""
     def __str__(self):
+        """Returns a formatted string version of the variables"""
         return "[Hardware_has_Notification  ]               :NOTIFICATION_ID: {:<12} HARDWARE_ID: {:<8}" \
             .format(self.hardware_id, self.notification_id)
 
-    """If explicit is true, then return the explicit versio of the variables, if not, return the other version"""
     @staticmethod
-    def dict_to_object(payload: dict, explicit: bool = False) -> "Hardware_has_Notification":
+    def dict_to_object(payload: dict, explicit=False) -> "Hardware_has_Notification":
+        """If explicit is true, then return the explicit versio of the variables, if not, return the other version"""
         if explicit:
             return Hardware_has_Notification(
                 payload[Hardware_has_Notification.EXPLICIT_HARDWARE_ID],
@@ -41,3 +43,6 @@ class Hardware_has_Notification(Data):
             return Hardware_has_Notification(
                 payload[Hardware_has_Notification.HARDWARE_ID],
                 payload[Hardware_has_Notification.NOTIFICATION_ID])
+
+
+

@@ -24,21 +24,21 @@ class Notification(Data):
     EXPLICIT_COLUMNS = [EXPLICIT_TYPE, EXPLICIT_ID, EXPLICIT_CRITERIA_ID]
     """Organizes the explicit version of the variables above into an array"""
 
-    """Initializes the notification type, criteria id, and notification id"""
     def __init__(self, notification_type: int, criteria_id: int, notification_id: int = None):
+        """Initializes the notification type, criteria id, and notification id"""
         self.notification_type = int(notification_type)
         self.criteria_id = int(criteria_id)
         self.notification_id = int(notification_id) if notification_id is not None else None
 
-    """Returns a formatted string of the variables"""
     def __str__(self):
+        """Returns a formatted string of the variables"""
         return "[Notification   ]               :NOTIFICATION_TYPE: {:<12} CRITERIA_ID: {:<12} " \
                "NOTIFICATION_ID: {:<12}" \
             .format(self.notification_type, self.criteria_id, self.notification_id)
 
-    """Determines if explicit is true, if so then return the explicit variables, if not then return the normal ones"""
     @staticmethod
     def dict_to_object(payload: dict, explicit: bool = False) -> "Notification":
+        """Determines if explicit is true, if so then return the explicit variables, if not then return the normal ones"""
         if explicit:
             return Notification(payload[Notification.EXPLICIT_TYPE],
                                 payload[Notification.EXPLICIT_CRITERIA_ID], payload[Notification.EXPLICIT_ID])
