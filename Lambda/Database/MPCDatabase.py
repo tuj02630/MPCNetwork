@@ -1,7 +1,6 @@
 import sys
 from typing import Match
 
-import mysql.connector
 
 try:
     from Database.Data.Account import Account
@@ -51,17 +50,13 @@ class JoinItem:
 class MPCDatabase:
     def __init__(self):
         """Reference for my sql instance. Used to perform query in database"""
-        self.connection = mysql.connector.connect(host='mpc.c7s8y7an5gv1.us-east-1.rds.amazonaws.com',
-                                                  user='admin',
-                                                  password='1234567890',
-                                                  database="mydb2")
         """Reference for my sql instance. Used to perform query in database"""
 
         print("Connected")
 
     def close(self):
         """Closes connection to database"""
-        self.connection.close()
+        return
 
     def query(self, script: str) -> list:
         """
@@ -73,17 +68,7 @@ class MPCDatabase:
             Returns:
             Lis of dictionary representing the result of the execution of sql script given
         """
-        if "select" not in script.lower():
-            raise TypeError("Script should only be Select")
-
-        try:
-            with self.connection.cursor() as cur:
-                print("[Select      ]              :" + script)
-                cur.execute(script)
-                return list(cur)
-        except mysql.connector.Error as err:
-            print("[Error   ]: {}".format(err), file=sys.stderr)
-            raise err
+        return
 
     def insert(self, object_instance, ignore: bool = False):
         """
@@ -103,14 +88,7 @@ class MPCDatabase:
                 keys.append(key)
                 values.append(object_dict[key])
         script = self.gen_insert_script(object_instance.__class__.TABLE, keys, values, ignore)
-        try:
-            with self.connection.cursor() as cur:
-                print("[Insert      ]              :" + script)
-                cur.execute(script)
-                self.connection.commit()
-        except mysql.connector.Error as err:
-            print("[Error       ]              :" + str(err), file=sys.stderr)
-            raise err
+
         return
 
     def truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False):
@@ -128,28 +106,7 @@ class MPCDatabase:
             None
         """
         script = "TRUNCATE " + table_class.__name__ + ";"
-        try:
-            with self.connection.cursor() as cur:
-                if not foreign_key_check:
-                    key_check_script = "SET FOREIGN_KEY_CHECKS = 0;"
-                    print("[Foreign Key Check      ]              :" + key_check_script)
-                    cur.execute(script)
 
-                if auto_increment_reset:
-                    auto_increment_script = "ALTER TABLE " + table_class.__name__ + " AUTO_INCREMENT = 1;"
-                    print("[Auto Increment      ]              :" + key_check_script)
-                    cur.execute(script)
-
-                print("[TRUNCATE      ]              :" + script)
-                cur.execute(script)
-                self.connection.commit()
-                if not foreign_key_check:
-                    key_check_script = "SET FOREIGN_KEY_CHECKS = 1;"
-                    print("[Foreign Key Check      ]              :" + key_check_script)
-                    cur.execute(script)
-        except mysql.connector.Error as err:
-            print("[Error       ]              :" + str(err), file=sys.stderr)
-            raise err
         return
 
     def update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]):
@@ -166,20 +123,8 @@ class MPCDatabase:
             Returns:
             None
         """
-        if len(update_list) == 0:
-            return
-        script = self.gen_update_script(table_class.__name__, condition_item, update_list)
-        if "update" not in script.lower():
-            raise TypeError("Update should only be Update")
-        try:
-            with self.connection.cursor() as cur:
-                print("[Update      ]              :" + script)
-                cur.execute(script)
-                # return list(cur)
-                self.connection.commit()
-        except mysql.connector.Error as err:
-            print("[Error   ]: {}".format(err), file=sys.stderr)
-            raise err
+
+        return None
 
     def delete(self, table_class, condition_item: MatchItem):
         """
@@ -194,17 +139,7 @@ class MPCDatabase:
            None
        """
         script = f"Delete From {table_class.__name__} Where {condition_item.key} = {condition_item.value}"
-        if "delete" not in script.lower():
-            raise TypeError("Delete should only be delete")
-        try:
-            with self.connection.cursor() as cur:
-                print("[Delete      ]              :" + script)
-                cur.execute(script)
-                # return list(cur)
-                self.connection.commit()
-        except mysql.connector.Error as err:
-            print("[Error   ]: {}".format(err), file=sys.stderr)
-            raise err
+
 
     def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
         """
