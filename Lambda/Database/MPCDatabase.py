@@ -357,12 +357,39 @@ class MPCDatabase:
         return table_class.list_dict_to_object_list(payload["data"])
 
     def get_field_by_name(self, table_class, field: str, name: str):
-        """Fetches and returns the field of specified data"""
-        entries = self.select_payload(table_class.TABLE, [field],
-                                      match_list=[MatchItem(table_class.NAME, name)])
+        """
+           Execute query to get the object related to the specified field by the given name
+
+           Parameters:
+
+               >table_class : class<    : Class that represents the DB table that is to be updated
+               >condition_field         : string    : Name that has to match
+               >target_field            : string    : Field that you want to retrieve.
+
+           Returns:
+               >string<     : Field that you are retrieving
+       """
+        return self.get_field_by_field(table_class, field, table_class.NAME, name)
+
+    def get_field_by_field(self, table_class, target_field: str, condition_field: str, condition_value: str):
+        """
+           Execute query to get the object related to the specified field by the given condition
+
+           Parameters:
+
+               >table_class : class<    : Class that represents the DB table that is to be updated
+               >condition_field         : string    : Condition field that has to match
+               >condition_value         : string    : Condition value that is used to compare
+               >target_field            : string    : Field that you want to retrieve.
+
+           Returns:
+               >string<     : Field that you are retrieving
+       """
+        entries = self.select_payload(table_class.TABLE, [target_field],
+                                      match_list=[MatchItem(condition_field, condition_value)])
         if len(entries["data"]) == 0:
             return None
-        return entries["data"][0][field]
+        return entries["data"][0][target_field]
 
     def get_by_name(self, table_class, name: str):
         """
@@ -375,10 +402,7 @@ class MPCDatabase:
             Returns:
                 >object<  : Object found in DB
         """
-        data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.NAME, name)])["data"]
-        if len(data) != 1:
-            return None
-        return table_class.dict_to_object(data[0])
+        return self.get_by_field(table_class, table_class.NAME, name)
 
     def get_by_id(self, table_class, id: int):
         """
@@ -392,7 +416,23 @@ class MPCDatabase:
             Returns:
                 >list[object]<  :    List of objects found in DB
         """
-        data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.ID, id)])["data"]
+        return self.get_by_field(table_class, table_class.ID, str(id))
+
+    def get_by_field(self, table_class, field: str, value: str):
+        """
+           Execute query to get the object related to the specified field by the given condition
+
+           Parameters:
+
+               >table_class : class<    : Class that represents the DB table that is to be updated
+               >field           : string    : Field that has to match
+               >value           : string    : Value that is used to compare
+
+           Returns:
+               >object<         : Object found in database
+       """
+        data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(field, value)])[
+            "data"]
         if len(data) != 1:
             return None
         return table_class.dict_to_object(data[0])
@@ -408,10 +448,7 @@ class MPCDatabase:
             Returns:
                 >id<    : Id of object found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.NAME, name)])["data"]
-        if len(payload) == 0:
-            return None
-        return payload[0][table_class.ID]
+        return self.get_field_by_field(table_class, table_class.ID, table_class.NAME, name)
 
     def get_max_id(self, table_class):
         """
@@ -679,13 +716,13 @@ class MPCDatabase:
 
 
 if __name__ == "__main__":
-    from Lambda.Database.Data.Resolution import Resolution
-    from Lambda.Database.Data.Saving_Policy import Saving_Policy
-    from Lambda.Database.Data.Hardware import Hardware
-    from Lambda.Database.Data.Recording import Recording
-    from Lambda.Database.Data.Criteria import Criteria
-    from Lambda.Database.Data.Notification import Notification
-    from Lambda.Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
+    from Database.Data.Resolution import Resolution
+    from Database.Data.Saving_Policy import Saving_Policy
+    from Database.Data.Hardware import Hardware
+    from Database.Data.Recording import Recording
+    from Database.Data.Criteria import Criteria
+    from Database.Data.Notification import Notification
+    from Database.Data.Hardware_has_Saving_Policy import Hardware_has_Saving_Policy
     import random
 
     # print("Started")
@@ -798,5 +835,6 @@ if __name__ == "__main__":
 
     database.delete(Account, MatchItem(Account.NAME, "username"))
     print("Value" + str(database.get_field_by_name(Account, Account.ID, "username")))
-    database.close()
 
+    print(database.get_field_by_field(Account, Account.NAME, Account.EMAIL, "username1@email.com"))
+    database.close()

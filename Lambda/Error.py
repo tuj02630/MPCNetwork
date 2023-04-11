@@ -8,3 +8,5 @@ class Error:
     NAME_DUPLICATE = "Name Has Already been Taken"
 
     INVALID_EMAIL_FORMAT = "Invalid Email Format"
+
+    LOGIN_FAILED = "Username or password is incorrect"
