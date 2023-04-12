@@ -2,11 +2,13 @@ import socket
 import threading
 import DeviceConnection
 
+
 class LiveStreamServer:
     """
     Server class that will be running in server and manages the connection from clients
     """
-    def __init__(self, port):        
+
+    def __init__(self, port):
         self.BUFF_SIZE = 65536
         """Data buffer size for the video and audio stream"""
         self.HOST = '172.31.12.186'  # Private server IP
@@ -57,7 +59,7 @@ class LiveStreamServer:
                     if dc.get_device_id() == data[1:]:
                         print("\tmatch found!")
                         found = True
-                        print("\tRerouting old DeviceConnection with ID: " +str(dc.get_device_id()))
+                        print("\tRerouting old DeviceConnection with ID: " + str(dc.get_device_id()))
                         dc.reroute(addr)
                         connection_socket.sendto(bytes(str(dc.get_curr_port()), 'utf-8'), addr)
                         break
@@ -67,9 +69,9 @@ class LiveStreamServer:
                     connection_socket.sendto(bytes(str(curr_port), 'utf-8'), addr)
                     for receiver in self.receiver_backlog:
                         if receiver[0] == data[1:]:
-                            curr_port+=2
+                            curr_port += 2
                             curr_dc.add_receiver(receiver[1], curr_port)
-                            print("\t\tSending packet to: " +str(addr))
+                            print("\t\tSending packet to: " + str(addr))
                             connection_socket.sendto(bytes(str(curr_port), 'utf-8'), receiver[1])
                             self.receiver_backlog.remove(receiver)
                     curr_port += 2
@@ -81,7 +83,7 @@ class LiveStreamServer:
                         found = True
                         print("\tmatch found!")
                         dc.add_receiver(addr[0], curr_port)
-                        print("\t\tSending packet to: " +str(addr))
+                        print("\t\tSending packet to: " + str(addr))
                         connection_socket.sendto(bytes(str(curr_port), 'utf-8'), addr)
                         curr_port += 2
                         break
@@ -91,7 +93,7 @@ class LiveStreamServer:
                     self.receiver_backlog.append((data[1:], addr))
             else:
                 print("Data: " + data)
-                print("Unrecognized connection attempt. Format should be '[DEVICE_TYPE_CHAR][DEVICE_ID] encoded in utf-8'")
+                print(
+                    "Unrecognized connection attempt. Format should be '[DEVICE_TYPE_CHAR][DEVICE_ID] encoded in utf-8'")
 
-
-lss = LiveStreamServer(9999)
+# lss = LiveStreamServer(9999)

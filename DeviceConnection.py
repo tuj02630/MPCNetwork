@@ -1,11 +1,54 @@
 import socket
 import threading
 
+
 class DeviceConnection:
     """
     A DeviceConnection is created for each sender client
     DeviceConnections maintain existing sender connections and are responsible for routing packets from a sender to zero or more receivers
     """
+
+    def __init__(self, s_addr: tuple, device_id: str, curr_port: int):
+        self.BUFF_SIZE = 65536
+        """Data buffer size for the video and audio stream"""
+        self.HOST = '172.31.12.186'
+        """Private ip for the server"""
+        self.DEBUG = False
+        """Debugging backend option"""
+        self.device_id = device_id
+        """String containing sending device's ID"""
+        self.s_addr = s_addr
+        """Tuple containing the IP and Port of the sending device"""
+        self.curr_port = curr_port  # video port, audio port is + 1
+        """Tuple containing the IP and Port of the sending device"""
+        self.v_socket_array: tuple = []
+        """Array of IP/Port Tuples to send video to"""
+        self.a_socket_array: tuple = []
+        """Array of IP/Port Tuples to send audio to"""
+        self.v_receiver_array: socket.socket = []  #
+        """Array of sockets to send video data to the respective v_socket_array address"""
+        self.a_receiver_array: socket.socket = []  #
+        """Array of sockets to send audio data to the respective a_socket_array address"""
+        self.sv_socket: socket.socket = None
+        """Socket for receiving video from sender"""
+        self.sa_socket: socket.socket = None
+        """Socket for receiving audio from sender"""
+        self.sv_addr: tuple = ('', 0)
+        """Tuple for storing address of video sender"""
+        self.sa_addr: tuple = ('', 0)
+        """Tuple for storing address of audio sender"""
+        self.shutoff = False
+        """Boolean to shut off threads"""
+        self.vid_thread: threading.Thread
+        """Thread for handling video packets"""
+        self.aud_thread: threading.Thread
+        """Thread for handling audio packets"""
+        print("\t\tCreated new DeviceConnection with Device ID: " + self.device_id + " and address: " + str(self.s_addr))
+        self.vid_thread = threading.Thread(target=self.video_sending_handler)
+        self.aud_thread = threading.Thread(target=self.audio_sending_handler)
+        self.vid_thread.start()
+        self.aud_thread.start()
+
     def video_sending_handler(self):
         """
             Function for handling a video sender's packets and routing them to video receievers
@@ -21,11 +64,11 @@ class DeviceConnection:
         # self.sv_socket.bind((local_ip, self.curr_port))
 
         # start connection
-        self.sv_socket.bind(((self.HOST, self.curr_port)))
+        self.sv_socket.bind((self.HOST, self.curr_port))
         while True:
             if self.shutoff:
                 return
-            packet, sv_addr = self.sv_socket.recvfrom(self.BUFF_SIZE)
+            packet, self.sv_addr = self.sv_socket.recvfrom(self.BUFF_SIZE)
             # print("Packet length: " + str(len(packet)))
             if self.DEBUG:
                 print("\nReceiving Video: " + str(packet))
@@ -34,7 +77,7 @@ class DeviceConnection:
             for sock in self.v_receiver_array:
                 # print("SENDING PACKET IN SOCKET: " + str(sock) + ", TO " + str(self.v_socket_array[i]))
                 sock.sendto(packet, (self.v_socket_array[i]))
-                i+= 1
+                i += 1
 
     def audio_sending_handler(self):
         """
@@ -54,15 +97,15 @@ class DeviceConnection:
         while True:
             if self.shutoff:
                 return
-            packet, sa_addr = self.sa_socket.recvfrom(self.BUFF_SIZE)
+            packet, self.sa_addr = self.sa_socket.recvfrom(self.BUFF_SIZE)
             # send packet to all ra ips here
             i = 0
             for sock in self.a_receiver_array:
                 # print("sending packet to " + str(self.a_socket_array[i]))
                 sock.sendto(packet, self.a_socket_array[i])
-                i+=1
+                i += 1
 
-    def add_receiver(self, ip:str, port:int):
+    def add_receiver(self, ip: str, port: int):
         """
             Function for adding a receiver to an existing DeviceConnection
 
@@ -74,7 +117,7 @@ class DeviceConnection:
             Returns:
             None
         """
-        print("\tOpening two new sockets with ports: " + str(port) + " and " +str(port + 1))
+        print("\tOpening two new sockets with ports: " + str(port) + " and " + str(port + 1))
         rv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         rv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
         rv_socket.bind((self.HOST, port))
@@ -83,9 +126,8 @@ class DeviceConnection:
         ra_socket.bind((self.HOST, (port + 1)))
         threading.Thread(target=self.start_v_receiver_socket, args=(rv_socket,)).start()
         threading.Thread(target=self.start_a_receiver_socket, args=(ra_socket,)).start()
-        
 
-    def start_v_receiver_socket(self, v_socket:socket.socket):
+    def start_v_receiver_socket(self, v_socket: socket.socket):
         """
             Helper function for add_receiver, waits for a receiver to send a packet to confirm starting the video connection
 
@@ -102,8 +144,8 @@ class DeviceConnection:
         self.v_receiver_array.append(v_socket)
         # print("There are now " + str(len(self.v_socket_array)) + " addresses in the socket array")
         return
-    
-    def start_a_receiver_socket(self, a_socket:socket.socket):
+
+    def start_a_receiver_socket(self, a_socket: socket.socket):
         """
             Helper function for add_receiver, waits for a receiver to send a packet to confirm starting the audio connection
 
@@ -120,7 +162,6 @@ class DeviceConnection:
         self.a_receiver_array.append(a_socket)
         return
 
-
     def get_device_id(self):
         """
             Simple getter for device_id
@@ -133,51 +174,9 @@ class DeviceConnection:
         """
         return self.device_id
 
-    def __init__(self, s_addr: tuple, device_id: str, curr_port: int):
-        self.BUFF_SIZE = 65536
-        """Data buffer size for the video and audio stream"""
-        self.HOST = '172.31.12.186'
-        """Private ip for the server"""
-        self.DEBUG = False
-        """Debugging backend option"""
-        self.device_id = device_id
-        """String containing sending device's ID"""
-        self.s_addr = s_addr
-        """Tuple containing the IP and Port of the sending device"""
-        self.curr_port = curr_port  # video port, audio port is + 1
-        """Tuple containing the IP and Port of the sending device"""
-        self.v_socket_array:tuple = []
-        """Array of IP/Port Tuples to send video to"""
-        self.a_socket_array:tuple = []
-        """Array of IP/Port Tuples to send audio to"""
-        self.v_receiver_array: socket.socket = []  #
-        """Array of sockets to send video data to the respective v_socket_array address"""
-        self.a_receiver_array: socket.socket = []  #
-        """Array of sockets to send audio data to the respective a_socket_array address"""
-        self.sv_socket: socket.socket
-        """Socket for receiving video from sender"""
-        self.sa_socket: socket.socket
-        """Socket for receiving audio from sender"""
-        self.sv_addr: tuple = ('', 0)
-        """Tuple for storing address of video sender"""
-        self.sa_addr: tuple = ('', 0)
-        """Tuple for storing address of audio sender"""
-        self.shutoff = False
-        """Boolean to shut off threads"""
-        self.vid_thread: threading.Thread
-        """Thread for handling video packets"""
-        self.aud_thread: threading.Thread
-        """Thread for handling audio packets"""
-        print(
-            "\t\tCreated new DeviceConnection with Device ID: " + self.device_id + " and address: " + str(self.s_addr))
-        self.vid_thread = threading.Thread(target=self.video_sending_handler)
-        self.aud_thread = threading.Thread(target=self.audio_sending_handler)
-        self.vid_thread.start()
-        self.aud_thread.start()
-
     def reroute(self, s_addr: tuple):
         """
-            A function for changing an existing DeviceConnection's sender variables to a new sender without interrupting the connection for receivers
+            A function for changing an existing DeviceConnection's sender fields to a new sender without interrupting the connection for receivers
 
             Parameters:
             s_addr: The new address to receive packets from
@@ -220,4 +219,3 @@ class DeviceConnection:
             sock.close()
         for sock in self.a_receiver_array:
             sock.close()
-    

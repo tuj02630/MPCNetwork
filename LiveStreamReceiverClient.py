@@ -150,4 +150,4 @@ class LiveStreamReceiverClient:
             stream.write(data)
 
 
-lsrc = LiveStreamReceiverClient()
+# lsrc = LiveStreamReceiverClient()
