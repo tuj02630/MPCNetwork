@@ -2,6 +2,7 @@ import base64
 import json
 import random
 
+import EmailSender
 from Database.MPCDatabase import MPCDatabase
 from Database.Data.Recording import Recording
 from Database.Data.Account import Account, AccountStatus
@@ -298,13 +299,13 @@ def account_signin(event, pathPara, queryPara):
         return json_payload({"message": "login failed: " + Error.LOGIN_FAILED}, True)
 
     timestamp_check = database.varidate_timestamp(Account, field, body[Account.NAME])
-    database.update_fields(Account, (field, body[field]),
+    database.update_fields(Account, (field, body[Account.NAME]),
                            [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))"),
                             (Account.TIMESTAMP, "NOW()")])
     if not timestamp_check:
         return json_payload({"message": "login failed: " + Error.TIMESTAMP_ERROR}, True)
 
-    account: Account = database.get_by_field(Account, field, body[field])
+    account: Account = database.get_by_field(Account, field, body[Account.NAME])
     return json_payload({"message": "Signed in to Account",
                          Account.TOKEN: account.token, Account.NAME: account.username, Account.EMAIL: account.email})
 
@@ -326,9 +327,11 @@ def account_signin(event, pathPara, queryPara):
     code = str(random.randint(100000, 999999))
     database.update_fields(Account, (field, body[Account.NAME]), [(Account.CODE, code)])
     print(code)
-
-    ## TODO send email
-    return json_payload({"message": "Code sent"})
+    account: Account = database.get_by_field(Account, field, body[Account.NAME])
+    if EmailSender.send(account.email, "[MPC Account] Password reset Code", f"Reset code:  {account.code}"):
+        return json_payload({"message": "Code sent"})
+    else:
+        return json_payload({"message": "Failed to send code"})
 
 
 @api.handle("/account/code", httpMethod="POST")
@@ -349,7 +352,7 @@ def account_signin(event, pathPara, queryPara):
     if not timestamp_check:
         return json_payload({"message": "login failed: " + Error.TIMESTAMP_ERROR}, True)
 
-    if database.verify_fields(Account, [(field, body[field]), (Account.CODE, body[Account.CODE])]):
+    if database.verify_fields(Account, [(field, body[Account.NAME]), (Account.CODE, body[Account.CODE])]):
         database.update_fields(Account, (field, body[Account.NAME]),
                                [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))"),
                                 (Account.TIMESTAMP, "NOW()")])
@@ -699,6 +702,12 @@ def saving_policy_hardware_delete_by_id(event, pathPara, queryPara):
     return delete_by_hardware_id(Hardware_has_Saving_Policy, pathPara)
 
 
+@api.handle("/email", httpMethod="POST")
+def send_email(event, pathPara, queryPara):
+    request_body = event["body"]
+    return EmailSender.send(request_body["ToMail"], request_body["Subject"], request_body["LetterBody"])
+
+
 if __name__ == "__main__":
     import urllib
 
@@ -708,10 +717,10 @@ if __name__ == "__main__":
         "resource": "/account/code",
         "httpMethod": "POST",
         "body": """{
-            "username": "username1",
+            "username": "tun05036@temple.edu",
             "password": "password",
             "email": "default@temple.edu",
-            "code": "227722"
+            "code": "658186"
         }""",
         "pathParameters": {
             "id": max
@@ -720,7 +729,5 @@ if __name__ == "__main__":
             "notification_type": 10
         }
     }
-    print(check_password("password@12Apd"))
     print(lambda_handler(event, None))
-    print("{:06}".format(random.randint(100000, 999999)))
     database.close()
