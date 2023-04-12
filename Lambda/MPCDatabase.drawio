@@ -1,0 +1,165 @@
+<mxGraphModel dx="0" dy="0" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" background="none" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="node7" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Account.Account&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; password: &lt;br/&gt; account_id: &lt;br/&gt; email: &lt;br/&gt; username: &lt;br/&gt; status: &lt;br/&gt; token: &lt;br/&gt; timestamp: &lt;br/&gt; TABLE: &lt;br/&gt; NAME: &lt;br/&gt; PASSWORD: &lt;br/&gt; EMAIL: &lt;br/&gt; STATUS: &lt;br/&gt; TOKEN: &lt;br/&gt; TIMESTAMP: &lt;br/&gt; ID: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_NAME: &lt;br/&gt; EXPLICIT_PASSWORD: &lt;br/&gt; EXPLICIT_EMAIL: &lt;br/&gt; EXPLICIT_STATUS: &lt;br/&gt; EXPLICIT_TOKEN: &lt;br/&gt; EXPLICIT_TIMESTAMP: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, username: str, password: str, email: str, status: str = &amp;quot;N&amp;quot;,                  token: str = &amp;quot;md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))&amp;quot;, timestamp: str = &amp;quot;NOW()&amp;quot;,                  account_id: int = None): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-1534" y="1302" width="308" height="627" as="geometry" />
+    </mxCell>
+    <mxCell id="node12" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Criteria.Criteria&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; duration: &lt;br/&gt; criteria_id: &lt;br/&gt; magnitude: &lt;br/&gt; criteria_type: &lt;br/&gt; TABLE: &lt;br/&gt; MAGNITUDE: &lt;br/&gt; DURATION: &lt;br/&gt; ID: &lt;br/&gt; TYPE: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_MAGNITUDE: &lt;br/&gt; EXPLICIT_DURATION: &lt;br/&gt; EXPLICIT_TYPE: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, criteria_type: int, magnitude: int, duration: int, criteria_id: int=None): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-862" y="1401" width="306" height="429" as="geometry" />
+    </mxCell>
+    <mxCell id="node6" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Data.Data&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; object_to_dict(object: object): &lt;br/&gt; list_object_to_dict_list(list_object: list[object]): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;br/&gt; list_dict_to_object_list(cls, data_list: list[dict], explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-39" y="769" width="299" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="node8" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Hardware.Hardware&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; account_id: &lt;br/&gt; name: &lt;br/&gt; max_resolution: &lt;br/&gt; hardware_id: &lt;br/&gt; TABLE: &lt;br/&gt; NAME: &lt;br/&gt; ID: &lt;br/&gt; ACCOUNT_ID: &lt;br/&gt; RESOLUTION_NAME: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_HARDWARE_ID: &lt;br/&gt; EXPLICIT_NAME: &lt;br/&gt; EXPLICIT_ACCOUNT_ID: &lt;br/&gt; EXPLICIT_RESOLUTION_NAME: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, name: str, max_resolution: str, hardware_id: int = None, account_id: int = None): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-1206" y="1390" width="324" height="451" as="geometry" />
+    </mxCell>
+    <mxCell id="node13" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Hardware_has_Notification.Hardware_has_Notification&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; notification_id: &lt;br/&gt; hardware_id: &lt;br/&gt; TABLE: &lt;br/&gt; HARDWARE_ID: &lt;br/&gt; NOTIFICATION_ID: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_HARDWARE_ID: &lt;br/&gt; EXPLICIT_NOTIFICATION_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, hardware_id: int, notification_id: int): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-536" y="1467" width="476" height="297" as="geometry" />
+    </mxCell>
+    <mxCell id="node9" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Hardware_has_Saving_Policy.Hardware_has_Saving_Policy&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; saving_policy_id: &lt;br/&gt; hardware_id: &lt;br/&gt; TABLE: &lt;br/&gt; HARDWARE_ID: &lt;br/&gt; SAVING_POLICY_ID: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_HARDWARE_ID: &lt;br/&gt; EXPLICIT_SAVING_POLICY_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, hardware_id: int, saving_policy_id: int): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="281" y="1467" width="501" height="297" as="geometry" />
+    </mxCell>
+    <mxCell id="node15" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Notification.Notification&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; notification_type: &lt;br/&gt; criteria_id: &lt;br/&gt; notification_id: &lt;br/&gt; TABLE: &lt;br/&gt; TYPE: &lt;br/&gt; ID: &lt;br/&gt; CRITERIA_ID: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_TYPE: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_CRITERIA_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, notification_type: int, criteria_id: int, notification_id: int = None): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="-40" y="1434" width="301" height="363" as="geometry" />
+    </mxCell>
+    <mxCell id="node10" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Recording.Recording&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; date: &lt;br/&gt; recording_id: &lt;br/&gt; account_id: &lt;br/&gt; file_name: &lt;br/&gt; hardware_id: &lt;br/&gt; timestamp: &lt;br/&gt; TABLE: &lt;br/&gt; NAME: &lt;br/&gt; DATE: &lt;br/&gt; TIMESTAMP: &lt;br/&gt; ID: &lt;br/&gt; ACCOUNT_ID: &lt;br/&gt; HARDWARE_ID: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_FILE_NAME: &lt;br/&gt; EXPLICIT_DATE: &lt;br/&gt; EXPLICIT_TIMESTAMP: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_ACCOUNT_ID: &lt;br/&gt; EXPLICIT_HARDWARE_ID: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self,                  file_name: str, date: str, timestamp: str,                  recording_id: int = None, account_id: int = None, hardware_id: int = None): &lt;br/&gt; __str__(self): &lt;br/&gt; add_date_timestamp_from_query_para(self, queryPara): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="1138" y="1324" width="323" height="583" as="geometry" />
+    </mxCell>
+    <mxCell id="node11" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Resolution.Resolution&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; resolution_name: &lt;br/&gt; width: &lt;br/&gt; height: &lt;br/&gt; TABLE: &lt;br/&gt; NAME: &lt;br/&gt; WIDTH: &lt;br/&gt; HEIGHT: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_NAME: &lt;br/&gt; EXPLICIT_WIDTH: &lt;br/&gt; EXPLICIT_HEIGHT: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, resolution_name: str, width: int, height: int): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="802" y="1434" width="316" height="363" as="geometry" />
+    </mxCell>
+    <mxCell id="node14" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.Data.Saving_Policy.Saving_Policy&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; resolution_name: &lt;br/&gt; max_time: &lt;br/&gt; saving_policy_id: &lt;br/&gt; TABLE: &lt;br/&gt; ID: &lt;br/&gt; MAX_TIME: &lt;br/&gt; RESOLUTION_NAME: &lt;br/&gt; COLUMNS: &lt;br/&gt; EXPLICIT_ID: &lt;br/&gt; EXPLICIT_MAX_TIME: &lt;br/&gt; EXPLICIT_RESOLUTION_NAME: &lt;br/&gt; EXPLICIT_COLUMNS: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, max_time: int, resolution_name: str, saving_policy_id: int = None): &lt;br/&gt; __str__(self): &lt;br/&gt; dict_to_object(payload: dict, explicit=False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="1481" y="1434" width="323" height="363" as="geometry" />
+    </mxCell>
+    <mxCell id="node1" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.MPCDatabase.JoinItem&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; join_type: &lt;br/&gt; join_table: &lt;br/&gt; join_field1: &lt;br/&gt; join_field2: &lt;br/&gt; INNER: &lt;br/&gt; FULL: &lt;br/&gt; Left: &lt;br/&gt; Right: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, join_type: str, join_table: str, join_field1: str, join_field2: str): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="939" y="713" width="290" height="231" as="geometry" />
+    </mxCell>
+    <mxCell id="node4" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.MPCDatabase.MPCDatabase&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; connection: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; close(self): &lt;br/&gt; query(self, script: str): &lt;br/&gt; insert(self, object_instance, ignore: bool = False): &lt;br/&gt; truncate(self, table_class, foreign_key_check: bool = True, auto_increment_reset: bool = False): &lt;br/&gt; update(self, table_class, condition_item: MatchItem, update_list: list[MatchItem]): &lt;br/&gt; delete(self, table_class, condition_item: MatchItem): &lt;br/&gt; gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []): &lt;br/&gt; gen_insert_script(self, table_name: str, keys: list, values: list, ignore: bool): &lt;br/&gt; gen_update_script(self, table_name: str, condition_item: MatchItem, update_items: list[MatchItem]): &lt;br/&gt; select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []): &lt;br/&gt; verify_field(self, table_class, field: str, value: str): &lt;br/&gt; verify_fields(self, table_class, field_value_list: list[tuple]): &lt;br/&gt; verify_id(self, table_class, id: int): &lt;br/&gt; verify_name(self, table_class, name: str): &lt;br/&gt; get_all(self, table_class): &lt;br/&gt; get_field_by_name(self, table_class, field: str, name: str): &lt;br/&gt; get_by_name(self, table_class, name: str): &lt;br/&gt; get_by_id(self, table_class, id: int): &lt;br/&gt; get_id_by_name(self, table_class, name: str): &lt;br/&gt; get_max_id(self, table_class): &lt;br/&gt; get_all_by_account_id(self, table_class, account_id: int): &lt;br/&gt; get_all_by_account_name(self, table_class, account_name: str): &lt;br/&gt; get_ids_by_account_id(self, table_class, account_id): &lt;br/&gt; get_ids_by_account_name(self, table_class, account_name: str): &lt;br/&gt; get_all_by_hardware_id(self, table_class,  hardware_id: int): &lt;br/&gt; get_all_by_account_id_hardware_id(self, table_class, account_id: int, hardware_id: int): &lt;br/&gt; get_by_type(self, table_class, type: int): &lt;br/&gt; get_id_by_type(self, table_class, type: int): &lt;br/&gt; get_saving_policy_ids_by_hardware_id(self, table_class, hardware_id: int): &lt;br/&gt; get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int): &lt;br/&gt; get_notification_ids_by_hardware_id(self, table_class, hardware_id: int): &lt;br/&gt; get_hardware_ids_by_notification_id(self, table_class, notification_id: int): &lt;br/&gt; get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int): &lt;br/&gt; update_fields(self, table_class, condition_tuple: tuple[str, str], update_list: list[tuple[str, str]]): &lt;br/&gt; delete_by_field(self, table_class, condition_field: tuple[str, str]): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="280" y="405" width="352" height="847" as="geometry" />
+    </mxCell>
+    <mxCell id="node3" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Database.MPCDatabase.MatchItem&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; value: &lt;br/&gt; key: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, key: str, value, table: str = None): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="652" y="779" width="267" height="107" as="geometry" />
+    </mxCell>
+    <mxCell id="node5" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;mpc_api.MPC_API&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; handlers: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; get_key(self, value): &lt;br/&gt; handle(self, action: str, httpMethod=&amp;quot;GET&amp;quot;): &lt;br/&gt; add_handler(self, fun, action, httpMethod): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="1249" y="757" width="261" height="143" as="geometry" />
+    </mxCell>
+    <mxCell id="node0" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;object&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __doc__: &lt;br/&gt; __dict__: &lt;br/&gt; __slots__: &lt;br/&gt; __module__: &lt;br/&gt; __annotations__: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __class__(self: _T): &lt;br/&gt; __class__(self, __type: Type[object]): &lt;br/&gt; __init__(self): &lt;br/&gt; __new__(cls: Type[_T]): &lt;br/&gt; __setattr__(self, name: str, value: Any): &lt;br/&gt; __eq__(self, o: object): &lt;br/&gt; __ne__(self, o: object): &lt;br/&gt; __str__(self): &lt;br/&gt; __repr__(self): &lt;br/&gt; __hash__(self): &lt;br/&gt; __format__(self, format_spec: str): &lt;br/&gt; __getattribute__(self, name: str): &lt;br/&gt; __delattr__(self, name: str): &lt;br/&gt; __sizeof__(self): &lt;br/&gt; __reduce__(self): &lt;br/&gt; __reduce_ex__(self, protocol: SupportsIndex): &lt;br/&gt; __reduce_ex__(self, protocol: int): &lt;br/&gt; __dir__(self): &lt;br/&gt; __init_subclass__(cls): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="653" y="-206" width="266" height="561" as="geometry" />
+    </mxCell>
+    <mxCell id="node2" parent="1" vertex="1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;typing.Hashable&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __hash__(self): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;">
+      <mxGeometry x="716" y="-310" width="140" height="58" as="geometry" />
+    </mxCell>
+    <mxCell id="edge11" edge="1" value="" parent="1" source="node7" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="-1380" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge5" edge="1" value="" parent="1" source="node12" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="-709" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge12" edge="1" value="" parent="1" source="node6" target="node0" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="111" y="380" />
+          <mxPoint x="786" y="380" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge4" edge="1" value="" parent="1" source="node8" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="-1044" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge6" edge="1" value="" parent="1" source="node13" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="-298" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge8" edge="1" value="" parent="1" source="node9" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="532" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge7" edge="1" value="" parent="1" source="node15" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge13" edge="1" value="" parent="1" source="node10" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1300" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge10" edge="1" value="" parent="1" source="node11" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="960" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge14" edge="1" value="" parent="1" source="node14" target="node6" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1643" y="1277" />
+          <mxPoint x="111" y="1277" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge3" edge="1" value="" parent="1" source="node1" target="node0" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1084" y="380" />
+          <mxPoint x="786" y="380" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge0" edge="1" value="" parent="1" source="node4" target="node0" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="456" y="380" />
+          <mxPoint x="786" y="380" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge2" edge="1" value="" parent="1" source="node3" target="node0" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge9" edge="1" value="" parent="1" source="node5" target="node0" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1380" y="380" />
+          <mxPoint x="786" y="380" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge1" edge="1" value="" parent="1" source="node0" target="node2" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=1;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.001;entryDx=0;entryDy=0;">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <Array as="points" />
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

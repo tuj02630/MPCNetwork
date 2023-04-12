@@ -2,17 +2,19 @@ class MPC_API:
     def __init__(self):
         self.handlers = {}
 
-    def get_key(self, action):
-        return action.lower()
+    def get_key(self, value):
+        return value.lower()
 
-    def handle(self, action):
+    def handle(self, action: str, httpMethod="GET"):
         def decorator(func):
-            # print("inside")
-            self.add_handler(func, action)
+            self.add_handler(func, action, httpMethod)
             return func
         return decorator
 
-    def add_handler(self, fun, action):
-        self.handlers[self.get_key(action)] = fun
+    def add_handler(self, fun, action, httpMethod):
+        if action in self.handlers:
+            self.handlers[self.get_key(action)][self.get_key(httpMethod)] = fun
+        else:
+            self.handlers[self.get_key(action)] = {self.get_key(httpMethod) : fun}
 
 
