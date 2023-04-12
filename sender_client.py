@@ -7,7 +7,6 @@ import socket
 import threading
 import pyaudio
 
-
 class SenderClient:
     """Reference for Sender Client, the network script in the camera. Used to send video and audio to the server"""
 
