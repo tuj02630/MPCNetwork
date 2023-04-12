@@ -1,12 +1,13 @@
 import sys
-from typing import Match
 
 import mysql.connector
+from Database.Data.Configuration import Configuration
 
 try:
     from Database.Data.Account import Account
 except:
     from Lambda.Database.Data.Account import Account
+
 
 class MatchItem:
     """
@@ -15,11 +16,14 @@ class MatchItem:
         MatchItem class takes the key and value items so that MPCdatabase can construct proper sql script
         in WHERE clause to define the conditions.
     """
+
     def __init__(self, key: str, value, table: str = None):
         """Initializes the key and table variables"""
         self.key = key
         "key that is used to be matched with value"
-        self.value = f"'{value}'" if type(value) is str and value[-1:] != ")" else f"{str(value)}"
+        self.value = f"{str(value)}" if type(value) is not str or value[-1:] == ")" else f"'{value}'"
+        if value is None or (type(value) is str and value.upper() == "NONE"):
+            self.value = "NULL"
         "Value that is used to check the match"
 
 
@@ -206,7 +210,8 @@ class MPCDatabase:
             print("[Error   ]: {}".format(err), file=sys.stderr)
             raise err
 
-    def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> str:
+    def gen_select_script(self, table_name: str, keys: list, match_list: list[MatchItem] = [],
+                          join_list: list[JoinItem] = []) -> str:
         """
            Generates sql scripts and queries to specify information based on certain constraints"
 
@@ -220,11 +225,11 @@ class MPCDatabase:
                >string<     :   SQL script generated based on the parameters
        """
         join_clause = "".join(
-                   [" {} Join {} On {} = {}".format(item.join_type, item.join_table, item.join_field1, item.join_field2)
-                        for item in join_list]
-                    ) if len(join_list) != 0 else ""
+            [" {} Join {} On {} = {}".format(item.join_type, item.join_table, item.join_field1, item.join_field2)
+             for item in join_list]
+        ) if len(join_list) != 0 else ""
         where_clause = " Where " + " and ".join(
-                   [f"{item.key} = {item.value}" for item in match_list]) if not len(match_list) == 0 else ""
+            [f"{item.key} = {item.value}" for item in match_list]) if not len(match_list) == 0 else ""
 
         return "Select " + ",".join(keys) + \
                " From " + table_name + \
@@ -250,15 +255,17 @@ class MPCDatabase:
         return "Insert " + \
                ("Ignore" if ignore else "") + \
                " Into " + table_name + \
-               "(" + ",".join(keys) + ") Values (" + ",".join([(f"'{v}'" if type(v) is str and v[-1:] != ")" else f"{str(v)}") for v in values]) + ");"
+               "(" + ",".join(keys) + ") Values (" + ",".join(
+            [(f"'{v}'" if type(v) is str and v[-1:] != ")" else f"{str(v)}") for v in values]) + ");"
 
     def gen_update_script(self, table_name: str, condition_item: MatchItem, update_items: list[MatchItem]):
         """Creates an sql update statement"""
-        return  "Update " + table_name + \
-                " Set " + ", ".join([f"{item.key} = {item.value}"for item in update_items]) + \
-                " Where " + f"{condition_item.key} = {condition_item.value}"
+        return "Update " + table_name + \
+               " Set " + ", ".join([f"{item.key} = {item.value}" for item in update_items]) + \
+               " Where " + f"{condition_item.key} = {condition_item.value}"
 
-    def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [], join_list: list[JoinItem] = []) -> dict:
+    def select_payload(self, table_name: str, columns: list[str], match_list: list[MatchItem] = [],
+                       join_list: list[JoinItem] = []) -> dict:
         """
            Formats the result of query to dictionary format.
 
@@ -495,7 +502,8 @@ class MPCDatabase:
         payload = self.select_payload(
             table_class.TABLE, table_class.EXPLICIT_COLUMNS,
             match_list=[MatchItem(Account.NAME, account_name)],
-            join_list=[JoinItem(JoinItem.INNER, Account.TABLE, table_class.EXPLICIT_ACCOUNT_ID, Account.EXPLICIT_ID)])["data"]
+            join_list=[JoinItem(JoinItem.INNER, Account.TABLE, table_class.EXPLICIT_ACCOUNT_ID, Account.EXPLICIT_ID)])[
+            "data"]
 
         return table_class.list_dict_to_object_list(payload, explicit=True)
 
@@ -510,7 +518,8 @@ class MPCDatabase:
             Returns:
                 >list[int]<     : IDs of Objects found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.ID], [MatchItem(table_class.ACCOUNT_ID, account_id)])
+        payload = self.select_payload(table_class.TABLE, [table_class.ID],
+                                      [MatchItem(table_class.ACCOUNT_ID, account_id)])
         return [v[table_class.ID] for v in payload["data"]]
 
     def get_ids_by_account_name(self, table_class, account_name: str):
@@ -532,7 +541,7 @@ class MPCDatabase:
 
         return [v[table_class.ID] for v in payload["data"]]
 
-    def get_all_by_hardware_id(self, table_class,  hardware_id: int):
+    def get_all_by_hardware_id(self, table_class, hardware_id: int):
         """
             Execute query to get the all objects related to the given hardware_id in the table
 
@@ -578,7 +587,8 @@ class MPCDatabase:
             Returns:
                 >object<  : Object found in DB
         """
-        data = self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
+        data = \
+        self.select_payload(table_class.TABLE, table_class.COLUMNS, match_list=[MatchItem(table_class.TYPE, type)])[
             "data"]
         if len(data) != 1:
             return None
@@ -611,7 +621,8 @@ class MPCDatabase:
             Returns:
                 >list[int]<     : IDs of Objects found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
+        payload = self.select_payload(table_class.TABLE, [table_class.SAVING_POLICY_ID],
+                                      [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.SAVING_POLICY_ID] for v in payload["data"]]
 
     def get_hardware_ids_by_saving_policy_id(self, table_class, saving_policy_id: int) -> list[int]:
@@ -625,7 +636,8 @@ class MPCDatabase:
             Returns:
                 >list[int]<     : IDs of Objects found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
+        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID],
+                                      [MatchItem(table_class.SAVING_POLICY_ID, saving_policy_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
     def get_notification_ids_by_hardware_id(self, table_class, hardware_id: int) -> list[int]:
@@ -639,7 +651,8 @@ class MPCDatabase:
             Returns:
                 >list[int]<     : IDs of Objects found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID], [MatchItem(table_class.HARDWARE_ID, hardware_id)])
+        payload = self.select_payload(table_class.TABLE, [table_class.NOTIFICATION_ID],
+                                      [MatchItem(table_class.HARDWARE_ID, hardware_id)])
         return [v[table_class.NOTIFICATION_ID] for v in payload["data"]]
 
     def get_hardware_ids_by_notification_id(self, table_class, notification_id: int) -> list[int]:
@@ -653,7 +666,8 @@ class MPCDatabase:
             Returns:
                 >list[int]<     : IDs of Objects found in DB
         """
-        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID], [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
+        payload = self.select_payload(table_class.TABLE, [table_class.HARDWARE_ID],
+                                      [MatchItem(table_class.NOTIFICATION_ID, notification_id)])
         return [v[table_class.HARDWARE_ID] for v in payload["data"]]
 
     def get_all_by_join_id(self, table_class, join_table_class, join_field: str, match_field: str, match_id: int):
@@ -713,6 +727,24 @@ class MPCDatabase:
             None
         """
         self.delete(table_class, MatchItem(condition_field[0], condition_field[1]))
+
+    def varidate_timestamp(self, table_name, field: str, value: str) -> bool:
+        """
+           Return true if the current timestamp is not far from the previous timestamp in the table.
+           Detects the consecutive requests by robots.
+
+           Parameters:
+
+               >table_class    : class<            : Class that represents the DB table that is to be updated
+
+           Returns:
+               >bool<           : True if the current timestamp is not so close to the previous timestamp
+        """
+        key = f"TIMESTAMPADD(Second, {Configuration.INTERVAL}, TIMESTAMP) < NOW()"
+
+        payload = self.select_payload(
+            table_name.TABLE, [key], [MatchItem(field, value)])
+        return int(payload["data"][0][key]) == 1
 
 
 if __name__ == "__main__":
@@ -837,4 +869,6 @@ if __name__ == "__main__":
     print("Value" + str(database.get_field_by_name(Account, Account.ID, "username")))
 
     print(database.get_field_by_field(Account, Account.NAME, Account.EMAIL, "username1@email.com"))
+    print(MatchItem("Key", "NONE").value)
+    print(database.varidate_timestamp(Account, Account.NAME, "username1"))
     database.close()

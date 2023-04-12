@@ -1,9 +1,10 @@
 import base64
 import json
+import random
 
 from Database.MPCDatabase import MPCDatabase
 from Database.Data.Recording import Recording
-from Database.Data.Account import Account
+from Database.Data.Account import Account, AccountStatus
 from Database.Data.Hardware import Hardware
 from Database.Data.Criteria import Criteria
 from Database.Data.Notification import Notification
@@ -59,13 +60,13 @@ def lambda_handler(event, context):
     }
 
 
-def json_payload(body, error: list = []):
+def json_payload(body, error=False):
     """If there's an error, return an error, if not, then return the proper status code, headers, and body"""
-    if len(error) != 0:
+    if error:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({"body": body, "error": error})
+            'body': json.dumps({"body": body})
         }
     return {
         'statusCode': 200,
@@ -85,7 +86,7 @@ def check_email(email):
 
 def check_password(password):
     """Makes sure the password is in the correct format and is at least 8 characters"""
-    if re.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password):
+    if re.fullmatch(r"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$", password):
         return True
     else:
         return False
@@ -268,22 +269,23 @@ def account_signup(event, pathPara, queryPara):
     error = []
     if database.verify_name(Account, body[Account.NAME]):
         error.append(Error.NAME_DUPLICATE)
+    if database.verify_field(Account, Account.EMAIL, body[Account.EMAIL]):
+        error.append(Error.EMAIL_DUPLICATE)
     if not check_email(body["email"]):
         error.append(Error.INVALID_EMAIL_FORMAT)
     if not check_password(body["password"]):
         error.append(Error.PASSWORD_WEAK)
 
     if len(error) == 0:
-        database.insert(Account(body["username"], body["password"], body["email"]))
+        database.insert(Account(body["username"], body["password"], body["email"], timestamp="NOW()"))
         return json_payload({"message": "Account created"})
-    return json_payload(None, error)
+    return json_payload({"message": "\n".join(error)}, True)
 
 
 @api.handle("/account/signin", httpMethod="POST")
 def account_signin(event, pathPara, queryPara):
     """Handles users signing into their account by verifying their username and password in the database"""
     body: dict = event["body"]
-    field = None
 
     if database.verify_fields(
             Account, [(Account.NAME, body[Account.NAME]), (Account.PASSWORD, body[Account.PASSWORD])]):
@@ -293,13 +295,101 @@ def account_signin(event, pathPara, queryPara):
             Account, [(Account.EMAIL, body[Account.NAME]), (Account.PASSWORD, body[Account.PASSWORD])]):
         field = Account.EMAIL
     else:
-        return json_payload({"error": "login failed: " + Error.LOGIN_FAILED})
+        return json_payload({"message": "login failed: " + Error.LOGIN_FAILED}, True)
 
+    timestamp_check = database.varidate_timestamp(Account, field, body[Account.NAME])
     database.update_fields(Account, (field, body[field]),
-                           [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))")])
+                           [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))"),
+                            (Account.TIMESTAMP, "NOW()")])
+    if not timestamp_check:
+        return json_payload({"message": "login failed: " + Error.TIMESTAMP_ERROR}, True)
+
     account: Account = database.get_by_field(Account, field, body[field])
     return json_payload({"message": "Signed in to Account",
                          Account.TOKEN: account.token, Account.NAME: account.username, Account.EMAIL: account.email})
+
+
+@api.handle("/account/reset", httpMethod="POST")
+def account_signin(event, pathPara, queryPara):
+    """Handles users reset their account by verifying their username in the database"""
+    body: dict = event["body"]
+
+    if database.verify_fields(
+            Account, [(Account.NAME, body[Account.NAME])]):
+        field = Account.NAME
+
+    elif database.verify_fields(
+            Account, [(Account.EMAIL, body[Account.NAME])]):
+        field = Account.EMAIL
+    else:
+        return json_payload({"message": "Code sent: "})
+    code = str(random.randint(100000, 999999))
+    database.update_fields(Account, (field, body[Account.NAME]), [(Account.CODE, code)])
+    print(code)
+
+    ## TODO send email
+    return json_payload({"message": "Code sent"})
+
+
+@api.handle("/account/code", httpMethod="POST")
+def account_signin(event, pathPara, queryPara):
+    """Handles users reset their account by verifying their username in the database"""
+    body: dict = event["body"]
+
+    if database.verify_fields(Account, [(Account.NAME, body[Account.NAME])]):
+        field = Account.NAME
+
+    elif database.verify_fields(Account, [(Account.EMAIL, body[Account.NAME])]):
+        field = Account.EMAIL
+    else:
+        return json_payload({"message": Error.INCORRECT_CODE}, True)
+
+    timestamp_check = database.varidate_timestamp(Account, field, body[Account.NAME])
+    database.update_fields(Account, (field, body[Account.NAME]), [(Account.TIMESTAMP, "NOW()")])
+    if not timestamp_check:
+        return json_payload({"message": "login failed: " + Error.TIMESTAMP_ERROR}, True)
+
+    if database.verify_fields(Account, [(field, body[field]), (Account.CODE, body[Account.CODE])]):
+        database.update_fields(Account, (field, body[Account.NAME]),
+                               [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))"),
+                                (Account.TIMESTAMP, "NOW()")])
+
+        token = database.get_field_by_field(Account, Account.TOKEN, field, body[Account.NAME])
+        return json_payload({"message": "Code confirmed", Account.TOKEN: token})
+    return json_payload({"message": Error.INCORRECT_CODE}, True)
+
+
+@api.handle("/account/password", httpMethod="POST")
+def account_signin(event, pathPara, queryPara):
+    """Handles users reset their account by verifying their username in the database"""
+    body: dict = event["body"]
+
+    if database.verify_fields(
+            Account, [(Account.NAME, body[Account.NAME]), (Account.CODE, body[Account.CODE]),
+                      (Account.TOKEN, body[Account.TOKEN])]
+    ):
+        field = Account.NAME
+
+    elif database.verify_fields(
+            Account, [(Account.EMAIL, body[Account.NAME]), (Account.CODE, body[Account.CODE]),
+                      (Account.TOKEN, body[Account.TOKEN])]
+    ):
+        field = Account.EMAIL
+    else:
+        return json_payload({"message": Error.UNKNOWN_ACCOUNT}, True)
+
+    timestamp_check = database.varidate_timestamp(Account, field, body[Account.NAME])
+    database.update_fields(Account, (field, body[Account.NAME]),
+                           [(Account.TOKEN, "md5(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 1000))"),
+                            (Account.PASSWORD, body[Account.PASSWORD]),
+                            (Account.CODE, None),
+                            (Account.TIMESTAMP, "NOW()")])
+    if not timestamp_check:
+        return json_payload({"message": "login failed: " + Error.TIMESTAMP_ERROR}, True)
+
+    token = database.get_field_by_field(Account, Account.TOKEN, field, body[Account.NAME])
+    return json_payload({"message": "Password reset successful", Account.TOKEN: token})
+
 
 @api.handle("/account", httpMethod="POST")
 def account_insert(event, pathPara, queryPara):
@@ -615,12 +705,13 @@ if __name__ == "__main__":
     # database.insert(Notification(10000, criteria_id=3), ignore=True)
     max = database.get_max_id(Notification)
     event = {
-        "resource": "/account/signin",
+        "resource": "/account/code",
         "httpMethod": "POST",
         "body": """{
             "username": "username1",
             "password": "password",
-            "email": "default@temple.edu"
+            "email": "default@temple.edu",
+            "code": "227722"
         }""",
         "pathParameters": {
             "id": max
@@ -629,6 +720,7 @@ if __name__ == "__main__":
             "notification_type": 10
         }
     }
-
+    print(check_password("password@12Apd"))
     print(lambda_handler(event, None))
+    print("{:06}".format(random.randint(100000, 999999)))
     database.close()
